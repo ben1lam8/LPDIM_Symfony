@@ -7,15 +7,15 @@ Intervenante : Sarah KHALIL
 * Mardi 06/02 (7h)
 
 ## Contenu
-1. [Présentation du Framework](#Présentation-du-Framework)
-2. [Installation](#Installation)
-3. [HTTPFundation/Front Controllers](#HTTPFundation/Front-Controllers)
-4. [Kernel](#Kernel)
-5. [Routing](#Routing)
-6. [Controller](#Controller)
-7. [Twig & Templating](#Twig-&-Templating)
-8. [Form](#Form)
-9. [Autres](#Autres)
+1. [Présentation du Framework](#présentation-du-framework)
+2. [Installation](#installation)
+3. [HTTPFundation/Front Controllers](#httpfundationfront-controllers)
+4. [Kernel](#kernel)
+5. [Routing](#routing)
+6. [Controller](#controller)
+7. [Twig & Templating](#twig--templating)
+8. [Form](#form)
+9. [Autres](#autres)
 
 ## Présentation du Framework 
 * MVC vs. HTTP
