@@ -34,13 +34,37 @@ Intervenante : Sarah KHALIL
 * Selon l'environnement d'exécution, la config principale du routage est surchargée par un autre fichier de config (chargé après la config principale). Certaines routes sont donc spécifiques à l'environnement.
 * Les résolutions de routes et les erreurs sont accessibles dans le profiler en environnement de dev
 * Les routes sont testées une à une apr ordre de chargement (config/routing.yml étant le point d'entrée). Sur un site impliquant beaucoup de routes, il convient donc de les optimisées en s'arrangeant pour les déclarer des plus larges au plus précises.
+* Les routes peuvent contenir des paramètres qui seront parsés puis passés au controller.
+* Ces formats de routes et de paramètres sont configurables aussi en annotation, en yml ou en xml
+* Les routes sont aussi configurables pour imposer une méthode HTTP ou un schéma SSL/TLS (http/https)
+* Il est possible de définir un prefixe de route à un ensemble de méthodes-controller en ajoutant une mention de niveau supérieur (en annotation de classe, en clé de niveau supérieur en yml/xml)
+* Deboggage : bin/console debug:router <route>
 
 ### Controller
 * Prend une Request et doit rendre une Response.
 * Si la Response contient du HTML invalide (comme avec un return new Response('fzrgerg')), les assets du Profiler ne peuvent pas être insérés et le profiler n'apparaît pas dans la page.
 * Le controller utilise un trait (ControllerTrait) qui offre un comportement render() qui lui-même utilise le container pour appeler le moteur de templating (Twig, par défaut)
-* Le controller ordonne donc de calculer la vue conrrespondant à un template. Le chemin de ce template est d'abord cherché dans app/resources/views. Ensuite, il sera recherché dans les bundles, puis sous-bundles...
+* Le controller est donc chargé de traiter la Request pour la transformer en Response. Il dispose pour cela d'un objet Request contenant tous les éventuels paramètres liés à la Request.
+* Le Request convertit automatiquement le contenu de la query string ou du post_body en ParameterBag. Pour récupérer un paramètre, il faut donc demander à la Request de retourner la valeur d'une clé de son ParameterBag (attribut de Request appelé 'query'): $request->query->get('username');
+* Le controller ordonne de calculer la vue conrrespondant à un template. Le chemin de ce template est d'abord cherché dans app/resources/views. Ensuite, il sera recherché dans les bundles, puis sous-bundles...
 * Le controller peut aussi rendre la vue comme du HTML (string) plutôt que comme une Response, grâce à renderVue(); Ce contenu doit donc être intégré à une Response (new Response($this->renderView(''template'), HTTP_NOT_FOUND))
+* Il est possible de passer un tableau de variables vers le template (2eme paramètre de render()), pour que le rendu soit dynamique.
+* 25 lignes max
+
+### Twig & Templating
+* Sorte de pré-processing de fihciers HTML avec un syntaxte supplémentaire : {# comment #}, {{ display }},  {% execute %}
+* Composition par blocs
+* Inclusion (include), héritage (extends), héritage horizontal (use), inclusion surchargée (embed)
+* Il est possible de récupérer un tableau de variables reçu depuis le controller (2eme paramètre de render())
+* Depuis le moteur, une variable globale est accessible : app. Elle contient notamment des données concernant la Request et son ParameterBag.
+* 100 lignes max
+
+### Form
+* Ce composant permet de fournir un objet liant le modèle à la vue. Les données peuvent être typées différemment de chaque coté mais le composant gère ces changements.
+* Un composant FormType fait ce lien entre une donnée et son champ de formulaire. Il relie donc une entité à un widget.
+* Si la conversion de donnée entité-widget est trop complexe pour être 'deviné' par le framework, il faut fournir un DataTransformer entre le vue et le modèle.
+* Ex: transfomer un array (model) en checkboxes, il faut un ModelTransformer (sous-classe de DataTransformer pour le sens model vers vue). Ce type de DataTransformer simple est sans doute déjà implémenté dans Symfony...
+* La génération d'une vue de formulaire suis un processus dont les étapes sont toujours dans le même ordre. Ces étapes donnent lieux à des évènements (FormEvents). En créant des listeners/subscribers abonnés à ces évennement, il est possible d'influancer de rendu de vue.
 
 ### Autre
 #### HTTP
@@ -60,8 +84,17 @@ Méthodes (verbs) HTTP à connaître pour une bonne API (modèle de Richardson) 
 Headers custom: X-...
 Voir easter-eggs dans les headers (exemple de sensiolabs.com)
 x-jobs: If you see this header, send us an email to job@sensiolabs.com with this reference
+
 #### HTTP 2.0 Asset data push ?
 * Rechercher...
 
 #### Middleware controller
 * Générer une subrequest depuis un controller C1 qui forward vers un C2. C'est ce dernier qui finira par appeler le render du template.
+
+#### Master/Sub Request
+* Master Request : Request issues d'une requête HTTP d'un client web
+* Sub Request : Request générée par l'application Symfony elle-même, notamment pour les forwards entre controllers
+* attention, bug connu : transférer des paramètres issus d'un ParameterBag de Master Request en méthod POST dans un ParameterBag de Sub Request peut dégrader ses données...
+
+#### ESI
+* Les requêtes du cache HTTP concernant les ESI doivent être des Master Request

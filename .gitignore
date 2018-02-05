@@ -12,7 +12,8 @@
 !/var/sessions
 /var/sessions/*
 !var/sessions/.gitkeep
-!var/SymfonyRequirements.php
+var/SymfonyRequirements.php
 /vendor/
 /web/bundles/
-.idea
+/.idea
+/startbootstrap-blog-home-gh-pages
