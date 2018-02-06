@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block pageHeading %}
+    Create a new category
+{% endblock %}
+{% block content %}
+
+    {#{{ form(categoryForm) }}#}
+
+    {{ form_start(categoryForm, {"attr":{"novalidate":"novalidate"}}) }}
+    {{ form_widget(categoryForm) }}
+        <input type="submit" value="Create">
+    {{ form_end(categoryForm) }}
+
+{% endblock %}

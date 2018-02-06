@@ -17,3 +17,4 @@ var/SymfonyRequirements.php
 /web/bundles/
 /.idea
 /startbootstrap-blog-home-gh-pages
+/web/upload

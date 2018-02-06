@@ -10,11 +10,13 @@ namespace AppBundle\Entity;
 
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * Class Category
  * @package AppBundle\Entity
- * @ORM\Entity()
+ * @ORM\Entity
+ * @UniqueEntity("name", message="{{value}} is already in database")
  */
 class Category
 {
@@ -28,7 +30,7 @@ class Category
     private $id;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", unique=true)
      * @var string
      */
     private $name;

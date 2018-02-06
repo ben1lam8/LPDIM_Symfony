@@ -15,9 +15,10 @@ Intervenante : Sarah KHALIL
 6. [Controller](#controller)
 7. [Twig & Templating](#twig--templating)
 8. [Form](#form)
-9. [Doctrine (DBAL & ORM)](#doctrine-(dbal--orm))
-10. [Dependency Injection](#dependency-injection)
-11. [Autres](#autres)
+9. [Doctrine (DBAL & ORM)](#doctrine-dbal--orm)
+10. [Validation](#validation)
+11. [Dependency Injection](#dependency-injection)
+12. [Autres](#autres)
 
 ## Présentation du Framework 
 * Anecdote nom : Simple Framework = SF = SymFony. Simple = Sensio en ???
@@ -75,6 +76,9 @@ Intervenante : Sarah KHALIL
 * Inclusion (include), héritage (extends), héritage horizontal (use), inclusion surchargée (embed)
 * Il est possible de récupérer un tableau de variables reçu depuis le controller (2eme paramètre de render())
 * Depuis le moteur, une variable globale est accessible : app. Elle contient notamment des données concernant la Request et son ParameterBag ainsi que la route ayant abouti à la génération de cette vue.
+* La fonction asset() du moteur permet de résoudre un chemin d'asset en un chemin réel et complet. Éventuellement, si ces assets sont versionnés, cette fonction gère aussi la résolution de la version à charger.
+* La configuration des assets se fait dans la clé framework de config.yml (ou config_dev.yml...) : base_url utile selon l'environnement, version pour avoir plusieurs version d'un jeu d'assets, etc.
+* La fonction absolute_url() résout aussi l'url réel et complet mais ne considère pas les autres paramètres d'assets.
 * 100 lignes max
 
 ## Form
@@ -86,6 +90,7 @@ Intervenante : Sarah KHALIL
 * La représentation intermédiaire d'un formulaire, entre son model et sa vue, est appelée 'normalized'.
 * La génération d'une vue de formulaire suit un processus dont les étapes sont toujours dans le même ordre. Ces étapes donnent lieux à des évènements (FormEvents). En créant des listeners/subscribers abonnés à ces évenements, il est possible d'influencer le rendu de la vue.
 * Le bouton submit du formulaire est à détacher du Type. C'est le moteur qui doit le générer. Il convient donc d'éclater le rendu du formulaire dans le moteur : form_start(form), form_widget(form), form_rest(form), <input type="submit">, form_end(form)
+* Il est possible d'ajouter un button type:submit à la création du type, mais cela impose une gestion plus complexe lors de la composition des types.
 * Il est possible de ne demander le rendu que d'un type du formulaire : form_row(form.type). Sur de longs formulaires, cela peut devenir fastidieux...
 * Chaque form_row est elle même composée du label du Type, de son/ses widgets, et des messages d'erreurs de validation. (form_label(form.type), form_widget(form.type), form_errors(form.type))
 * Par défault, HTML5 impose un attribut required sur chaque champ de formulaire. Pour désactiver ce comportement, il faut explmicitement définir le type comme non required (lors de son insertion avec $builder->add(Type::class, ['required'=> false])). Il est aussi possible de passer une valeur d'attibut "novalidation" à la méthode form_start depuis la vue.
@@ -98,9 +103,13 @@ Intervenante : Sarah KHALIL
 * L'entité associée au form lors de sa création étant vide lors de la première passe du controller, ses getters DOIVENT avoir un type de retour nullable en php 7+. Les retours nullables ne sont possibles qu'en php 7.1. Donc : ne pas typer les retours d'entité en php 7.
 * Doctrine passe par un EntityManager, un objet qui garde en mémoire les opérations à faire sur la base. Le flush valide/commit les opérations demandées. Il peut être aussi utile de clearer l'EntityManager lorsque beaucoup d'opérations lui ont été imposées.
 * Pas de persist() dans un update, un flush() suffit ! (moins d'opérations, dont les vérif' de création)
+* Lorsqu'on définit un Type comme contenant un FileType (comme pour une photo), HTTPFundation gèrera la conversion du fichier en UploadedFile lors de la soumission du formulaire. UploadedFile dispose d'une méthode move()
+* Ça ne fonctionne pas en typage fort... Si on met l'attribut qui représente une image en string, il sera récupéré comme UploadedFile à la soumission du formulaire et paf ! Si on le type en UploadFile... (tester ?)
+* Il faut éviter de stocker les images sur le même environnemnt que le serveur web (cf S3, CDN, etc.). Des services sont spécialisés là-dedans.
 
 ## Doctrine (DBAL & ORM)
-* DoctrineBundle utilise la librairie Doctrine en contexte Symfony pour gérer les accès au BDD (PDO + DBAL) ainsi que le mapping des entités (ORM)
+* DBAL = DataBase Abstraction Layer. ORM = Object Relation Mapping
+* DoctrineBundle utilise la librairie Doctrine en contexte Symfony pour gérer les accès à la BDD (PDO + DBAL) ainsi que le mapping des entités (ORM). Pas un composant Symfony.
 * bin/console doctrine:database:create
 * bin/console doctrine:schema:create
 * bin/console doctrine:schema:update --dump-sql -> bin/console doctrine:schema:update --force (mais pas très pro)
@@ -108,12 +117,34 @@ Intervenante : Sarah KHALIL
 * Les migrations sont tracables, et rollbackables. C'est plus lisible dans une PR et c'est défaisable si les conséquences sont graves pour la base.
 * bin/console doctrine:migrations:diff génère un fichier app/DoctrineMigration/Versionxxxxxx.php qui représente un instantanné du schéma (seulement).
 * bin/console doctrine:migrations:execute xxxxxxxx va executer la class Versionxxxxxxxx générée par diff et donc re-générer le schéma comme il l'était lors du diff.
+* un diff ajoute une entrée dans la table migrations_versions de la table du projet.
 * Tellement générique que finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
 * Relations One-to-One, One-to-Many, etc.
+* ParamConverter : Service (?) de Doctrine qui repère transforme le contenu de la Request en une Entity (grâce à l'id contenu dans la route). Un simple typehint de paramètre de contrôleur permet donc de récupérer une entité.
+
+## Validation
+* La validation est le fait d'impser des règles sur le type et les valeurs possible pour un attribut d'entité.
+* Il est aussi possible de vérifier l'unicité d'une entité (pas dans le composant validator mais dans un bridge de Doctrine). Cette unicité est vérifié à la validation, pas à l'insertion. Pour cela, il faut plutôt définir une règle ORM.
+* Toutes les contraintes et validateurs ne sont pas documentés. Vérifier dans les vendors.
+* Les fichiers et image disposent de contraintes et validator spécifiques.
+* Attention : lors d'un update, s'il n'y a pas de nouvel upload pour un fichier, celui-ci sera vide et pourrait lever une erreur de validation. Il faut alors utiliser des groupes de validation : 1 correspondant à la création et 1 correspondant à la mise à jour.
 
 ## Dependency Injection
+* Dependance : classe, service, valeur, tableau qui se trouve ailleurs dans l'application et sont on souhaite disposer localement. En faisant directement appel à cette dépendance, on renforce le couplage.
+* Pour disposer d'une dépendance localement en limitant au maximum le couplage, on injecte plutôt cette classe dans un emplacement générique prévu pour cela.
+* Les dépendances respectant ce schéma sont alors des services. Ces services sont listés dans un conteneur, et le composent DI se charge d'injecter ces services en tant que dépendances lors du démarrage de l'app.
+* Un service est une classe qui fournit des traitements. Le service doit être sans état : il ne doit pas dépendre lui-même d'un quelconque état de l'application. Un service doit fonctionner de la même manière à tout instant et depuis tout endroit de l'application.
+* Symfony dispose d'une classe particulière : un conteneur d'injection de dépendance.
+* Depuis 3.3, la classe du container est généré lors du démarrage en environnement dans /var/cache/(env). Lors du chargement du kernel et du composant DI, les configuration de services sont lues.
+* La classe du conteneur contient un tableau de clés-valeurs de tags-methodnames ... ... ... listant les classes ayant été reconnues comme des services. Les dépendances entre ces services sont aussi résolues.
+* Autowiring : injection dans constructeur ou mutateur grâce à un typehint de paramètre. 
+* Public/Private : accessiblité/restriction entre services dans le conteneur. Depuis 3.3, tous les services par défaut sont privés. La seule injection possible devient alors du wiring (auto ou non).
+* Seuls le controlleurs ont encore accès au container complet (grâce au trait ContainerAwareTrait), via $this->get('service').
+* La config des services (services.yml) permet de definir quelle classe monter en service automatiquement ou manuellement.
+
 * Les fichiers de config (dev, prod et normal) sont associés à un fichier yml appelé parameters.yml qui contient des clés et valeurs utilisables dans les autres fichiers de config
-* Lors de l'execution du composer install, un script est appelé (?). Celui-ci va lire le parameters.yml.dist et générer le parameters.yml correspondant, qui sera ensuite utilisable depuis les autres fichiers de config.
+* Lors de l'execution du composer install, un script est appelé (Incenteev\\ParameterHandler\\ScriptHandler::buildParameters). Celui-ci va lire le parameters.yml.dist et générer le parameters.yml correspondant (comme un template), qui sera ensuite utilisable depuis les autres fichiers de config.
+* On versionne donc le fichier .yml.dist pour partager un schéma de paramètres mais on ne versionne pas parameters.yml, qui correspond à la configuration de l'environnement
 
 ## Autres
 ### HTTP
@@ -157,6 +188,10 @@ x-jobs: If you see this header, send us an email to job@sensiolabs.com with this
 * Enfin, composer install télécharge toutes ces dépendances.
 * Lors d'un appel ultérieur à composer install, c'est ce fichier .lock qui sera lu, s'il est présent. Les dépendances téléchargées seront donc identique au projet initial.
 * La commande composer update supprime ce .lock et poursuit comme un composer install. Si le composer.json a changé ou si les règles de validation des versions sont trop larges, les nouvelles dépendances téléchargées peuvent différer de celle du projet initial. Ceci peut être très dangereux pour la stabilité d'un projet.
+
+### Flash Messages
+* Les flashs messages sont des strings qu'ont peut ranger par clé et transferer d'un controller à un moteur de template en rangeant le tableau des flashes dans la globales app
+* Les flashs messages survivent dans la session PHP. S'ils ne sont pas affichés, ils ne sont pas consommés/retirés de la session.
 
 ### Deboggage
 * bin/console config:dump-reference <bundle-prefix> : affiche les informations relatives aux variables d'un bundle.
