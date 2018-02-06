@@ -15,9 +15,12 @@ Intervenante : Sarah KHALIL
 6. [Controller](#controller)
 7. [Twig & Templating](#twig--templating)
 8. [Form](#form)
-9. [Autres](#autres)
+9. [Doctrine (DBAL & ORM)](#doctrine-(dbal--orm))
+10. [Dependency Injection](#dependency-injection)
+11. [Autres](#autres)
 
 ## Présentation du Framework 
+* Anecdote nom : Simple Framework = SF = SymFony. Simple = Sensio en ???
 * MVC vs. HTTP
 * Roadmap
 * Composants & Stack
@@ -79,7 +82,38 @@ Intervenante : Sarah KHALIL
 * Un composant FormType fait ce lien entre une donnée et son champ de formulaire. Il relie donc une entité à un widget.
 * Si la conversion de donnée entité-widget est trop complexe pour être 'deviné' par le framework, il faut fournir un DataTransformer entre le vue et le modèle.
 * Ex: transfomer un array (model) en checkboxes (vue), il faut un ModelTransformer (sous-classe de DataTransformer pour le sens model vers vue). Ce type de DataTransformer simple est sans doute déjà implémenté dans Symfony...
+* Ex: un DateTime en model correspond à plusieurs widget select box en vue.
+* La représentation intermédiaire d'un formulaire, entre son model et sa vue, est appelée 'normalized'.
 * La génération d'une vue de formulaire suit un processus dont les étapes sont toujours dans le même ordre. Ces étapes donnent lieux à des évènements (FormEvents). En créant des listeners/subscribers abonnés à ces évenements, il est possible d'influencer le rendu de la vue.
+* Le bouton submit du formulaire est à détacher du Type. C'est le moteur qui doit le générer. Il convient donc d'éclater le rendu du formulaire dans le moteur : form_start(form), form_widget(form), form_rest(form), <input type="submit">, form_end(form)
+* Il est possible de ne demander le rendu que d'un type du formulaire : form_row(form.type). Sur de longs formulaires, cela peut devenir fastidieux...
+* Chaque form_row est elle même composée du label du Type, de son/ses widgets, et des messages d'erreurs de validation. (form_label(form.type), form_widget(form.type), form_errors(form.type))
+* Par défault, HTML5 impose un attribut required sur chaque champ de formulaire. Pour désactiver ce comportement, il faut explmicitement définir le type comme non required (lors de son insertion avec $builder->add(Type::class, ['required'=> false])). Il est aussi possible de passer une valeur d'attibut "novalidation" à la méthode form_start depuis la vue.
+* Pour faciliter le rendu complexe d'un formulaire (et pour que ce soit moins moche...), plutôt que de sur-décomposer ses widgets, labels, etc., on utilise un FormTheme.
+* Un FormTheme est un template qui définit des blocks spécifiques contenant du code HTML. Lorsque le nom de ce block est appelé depuis un autre template, c'est le rendu définit dans le template qui est généré.
+* Un FormTheme custom se range généralement dans app/resources/views/form. Il faut ensuite le définir en config comme étant le thème utilisé (cf CookBook & doc) : config.yml -> twig -> form_themes -> -MyBundle::myformtheme.html.twig .
+* Un FormTheme par défaut est fournit dans le bundle twig (cf config:dump-reference twig). Le bundle fournit aussi d'autres themes spécifiques à des thèmes de frameworks CSS connus (ex: bootstrap). Attention : le css n'est pas founi...
+* $form->handleRequest($request); lie le formulaire à la requête en cours. Lance la validation des Types.
+* $form->isValid() compte le nombre d'erreurs de validation découverte lors du handleRequest.
+* L'entité associée au form lors de sa création étant vide lors de la première passe du controller, ses getters DOIVENT avoir un type de retour nullable en php 7+. Les retours nullables ne sont possibles qu'en php 7.1. Donc : ne pas typer les retours d'entité en php 7.
+* Doctrine passe par un EntityManager, un objet qui garde en mémoire les opérations à faire sur la base. Le flush valide/commit les opérations demandées. Il peut être aussi utile de clearer l'EntityManager lorsque beaucoup d'opérations lui ont été imposées.
+* Pas de persist() dans un update, un flush() suffit ! (moins d'opérations, dont les vérif' de création)
+
+## Doctrine (DBAL & ORM)
+* DoctrineBundle utilise la librairie Doctrine en contexte Symfony pour gérer les accès au BDD (PDO + DBAL) ainsi que le mapping des entités (ORM)
+* bin/console doctrine:database:create
+* bin/console doctrine:schema:create
+* bin/console doctrine:schema:update --dump-sql -> bin/console doctrine:schema:update --force (mais pas très pro)
+* Pour mettre à jour un schéma, il vaut mieux passer par des migrations, grâce au bundle DoctrineMigrationBundle
+* Les migrations sont tracables, et rollbackables. C'est plus lisible dans une PR et c'est défaisable si les conséquences sont graves pour la base.
+* bin/console doctrine:migrations:diff génère un fichier app/DoctrineMigration/Versionxxxxxx.php qui représente un instantanné du schéma (seulement).
+* bin/console doctrine:migrations:execute xxxxxxxx va executer la class Versionxxxxxxxx générée par diff et donc re-générer le schéma comme il l'était lors du diff.
+* Tellement générique que finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
+* Relations One-to-One, One-to-Many, etc.
+
+## Dependency Injection
+* Les fichiers de config (dev, prod et normal) sont associés à un fichier yml appelé parameters.yml qui contient des clés et valeurs utilisables dans les autres fichiers de config
+* Lors de l'execution du composer install, un script est appelé (?). Celui-ci va lire le parameters.yml.dist et générer le parameters.yml correspondant, qui sera ensuite utilisable depuis les autres fichiers de config.
 
 ## Autres
 ### HTTP
@@ -113,3 +147,17 @@ x-jobs: If you see this header, send us an email to job@sensiolabs.com with this
 
 ### ESI
 * Les requêtes du cache HTTP concernant les ESI doivent être des Master Request
+
+### Composer
+* Composer est un gestionnaire de dépendances PHP.
+* composer.json liste les dépendance d'un projet. Cette définition comprend des règles de validation des versions de dépendances.
+* chaque dépendance peut elle-même peut avoir des dépendances.
+* la commande composer install va lire les dépendances du composer.json, résoudre les versions demandées puis résoudre les dépendances des dépendances.
+* composer install génère ensuite un composer.lock qui garde les versions résolues de toutes les dépendances de tous les niveaux.
+* Enfin, composer install télécharge toutes ces dépendances.
+* Lors d'un appel ultérieur à composer install, c'est ce fichier .lock qui sera lu, s'il est présent. Les dépendances téléchargées seront donc identique au projet initial.
+* La commande composer update supprime ce .lock et poursuit comme un composer install. Si le composer.json a changé ou si les règles de validation des versions sont trop larges, les nouvelles dépendances téléchargées peuvent différer de celle du projet initial. Ceci peut être très dangereux pour la stabilité d'un projet.
+
+### Deboggage
+* bin/console config:dump-reference <bundle-prefix> : affiche les informations relatives aux variables d'un bundle.
+* bin/console debug:<service> : idem pour un service

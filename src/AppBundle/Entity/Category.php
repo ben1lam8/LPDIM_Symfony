@@ -9,22 +9,56 @@
 namespace AppBundle\Entity;
 
 
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * Class Category
+ * @package AppBundle\Entity
+ * @ORM\Entity()
+ */
 class Category
 {
 
     /**
      * @var int
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
      */
     private $id;
 
     /**
+     * @ORM\Column(type="string")
      * @var string
      */
     private $name;
 
     /**
-     * @var Color
+     * @return int
      */
-    private $color;
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    // No id setter
+
+    /**
+     * @return string
+     */
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return Category
+     */
+    public function setName($name): Category
+    {
+        $this->name = $name;
+        return $this;
+    }
 
 }

@@ -39,7 +39,10 @@
         <div class="col-md-8">
 
             <h1 class="my-4">
-                {% block pageHeading %}Page Heading{% endblock %}
+                {% block pageHeading %}
+                    Page Heading
+                    <small>Secondary text</small>
+                {% endblock %}
             </h1>
 
             {% block content%}{% endblock content %}

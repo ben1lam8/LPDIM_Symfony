@@ -9,6 +9,7 @@
 namespace AppBundle\Controller;
 
 
+use AppBundle\Entity\Show;
 use AppBundle\Type\ShowType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,7 +41,21 @@ class ShowController extends Controller
      */
     public function newAction(Request $request) : Response
     {
-        $form = $this->createForm(ShowType::class);
+        $show = new Show();
+        $form = $this->createForm(ShowType::class, $show);
+
+        $form->handleRequest($request);
+
+        if($form->isValid()){
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($show);
+            $em->flush();
+
+            $this->addFlash('success', 'Show successfully created !');
+
+            return $this->redirectToRoute('show_list');
+        }
 
         return $this->render(
             "show/new.html.twig",

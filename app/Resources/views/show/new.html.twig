@@ -4,7 +4,12 @@
 {% endblock %}
 {% block content %}
 
-    {{ form(showForm) }}
+    {#{{ form(showForm) }}#}
+
+    {{ form_start(showForm, {"attr":{"novalidate":"novalidate"}}) }}
+        {{ form_widget(showForm) }}
+        <input type="submit" value="Create">
+    {{ form_end(showForm) }}
 
 {% endblock %}
 
