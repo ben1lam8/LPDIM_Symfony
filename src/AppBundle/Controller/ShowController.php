@@ -1,17 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: benoit
- * Date: 05/02/18
- * Time: 13:54
- */
 
 namespace AppBundle\Controller;
-
 
 use AppBundle\Entity\Show;
 use AppBundle\File\FileUploader;
 use AppBundle\Type\ShowType;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,33 +19,49 @@ use Symfony\Component\Routing\Annotation\Route;
 class ShowController extends Controller
 {
     /**
-     * @Route("/", name="list")
-     * @param Request $request
+     * @Route("/", name="index")
+     * @Method({"GET"})
      * @return Response
      */
-    public function listAction(Request $request) : Response
+    public function indexAction(): Response
     {
         $shows = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show')->findAll();
 
-        return $this->render("show/list.html.twig", ['shows' => $shows]);
-
+        return $this->render(
+            "show/index.html.twig",
+            ['shows' => $shows]
+        );
     }
 
     /**
-     * @Route("/new", name="new")
+     * @Route("/show/{id}", name="show", requirements={"id"="\d+"})
+     * @Method({"GET"})
+     * @param Show $show
+     * @return Response
+     */
+    public function showAction(Show $show): Response
+    {
+        return $this->render(
+            "show/show.html.twig",
+            ['show' => $show]
+        );
+    }
+
+    /**
+     * @Route("/create", name="create")
+     * @Method({"GET", "POST"})
      * @param Request $request
      * @param FileUploader $fileUploader
      * @return Response
      */
-    public function newAction(Request $request, FileUploader $fileUploader): Response
+    public function createAction(Request $request, FileUploader $fileUploader): Response
     {
         $show = new Show();
         $form = $this->createForm(ShowType::class, $show, ['validation_groups' => 'create']);
 
         $form->handleRequest($request);
 
-        if($form->isValid()){
-
+        if ($form->isValid()) {
             $generatedFileName = $fileUploader->upload(
                 $show->getMainPicture(),
                 $show->getCategory()->getName()
@@ -65,46 +75,53 @@ class ShowController extends Controller
 
             $this->addFlash('success', 'Show successfully created !');
 
-            return $this->redirectToRoute('show_list');
+            return $this->redirectToRoute('show_index');
         }
 
         return $this->render(
-            "show/new.html.twig",
+            "show/create.html.twig",
             ['showForm' => $form->createView()]
         );
     }
 
     /**
-     * @Route("/update", name="update")
+     * @Route("/update/{id}", name="update", requirements={"id"="\d+"})
+     * @Method({"GET", "PUT"})
+     * @param Request $request
      * @param Show $show
+     * @param FileUploader $fileUploader
      * @return Response
      */
-    public function updateAction(Request $request, Show $show): Response
+    public function updateAction(Request $request, Show $show, FileUploader $fileUploader): Response
     {
-
         $showForm = $this->createForm(ShowType::class, $show, ['validation_groups' => 'update']);
 
         $showForm->handleRequest($request);
 
-        if($showForm->isValid()){
+        if ($showForm->isValid()) {
+            $generatedFileName = $fileUploader->upload(
+                $show->getMainPicture(),
+                $show->getCategory()->getName()
+            );
 
-            //TODO : Use FileUploader to remove tmp/main picture
+            $show->setMainPicture($generatedFileName);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($show);
+            $em->flush();
 
             $this->addFlash('success', 'Show successfully updated !');
 
-            return $this->redirectToRoute('show_list');
+            return $this->redirectToRoute('show_index');
         }
 
         return $this->render(
-            'show/new.html.twig',
+            'show/create.html.twig',
             ['showForm' => $showForm->createView()]
         );
     }
 
-    public function categoriesAction() : Response
+    public function searchAction(): Response
     {
-        return $this->render("_includes/categories.html.twig",[
-            'categories' => ['Web Design', 'HTML', 'Freebies', 'Javascript', 'CSS', 'Tutorials']
-        ]);
     }
 }

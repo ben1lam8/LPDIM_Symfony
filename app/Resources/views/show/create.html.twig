@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
+{% set action = app.request.attributes.get('_route') | split('_') | last | capitalize%}
+
 {% block pageHeading %}
-    Create a new show
+        {{ action }} a show
 {% endblock %}
 {% block content %}
 
@@ -8,7 +10,7 @@
 
     {{ form_start(showForm, {"attr":{"novalidate":"novalidate"}}) }}
         {{ form_widget(showForm) }}
-        <input type="submit" value="Create">
+        <input type="submit" value="{{ action }}">
     {{ form_end(showForm) }}
 
 {% endblock %}

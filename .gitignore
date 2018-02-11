@@ -18,3 +18,4 @@ var/SymfonyRequirements.php
 /.idea
 /startbootstrap-blog-home-gh-pages
 /web/upload
+.php_cs.cache

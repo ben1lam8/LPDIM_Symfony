@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: benoit
- * Date: 05/02/18
- * Time: 16:26
- */
 
 namespace AppBundle\Entity;
-
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -62,5 +55,4 @@ class Category
         $this->name = $name;
         return $this;
     }
-
 }

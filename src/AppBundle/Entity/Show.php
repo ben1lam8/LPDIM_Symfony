@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: benoit
- * Date: 05/02/18
- * Time: 16:26
- */
+
 
 namespace AppBundle\Entity;
 
@@ -223,7 +218,7 @@ class Show
     /**
      * @return File
      */
-    public function getTmpPictureFile(): File
+    public function getTmpPictureFile(): ?File
     {
         return $this->tmpPictureFile;
     }
@@ -237,5 +232,4 @@ class Show
         $this->tmpPictureFile = $tmpPictureFile;
         return $this;
     }
-
 }

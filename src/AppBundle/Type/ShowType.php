@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: benoit
- * Date: 05/02/18
- * Time: 16:13
- */
 
 namespace AppBundle\Type;
-
 
 use AppBundle\Entity\Category;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -27,6 +20,6 @@ class ShowType extends AbstractType
             ->add('country', CountryType::class, ['preferred_choices' => ['FR', 'UK', 'US']])
             ->add('author')
             ->add('releaseDate')
-            ->add('tmpPicture', FileType::class, ['label' => 'Main Picture']);
+            ->add('tmpPictureFile', FileType::class, ['label' => 'Main Picture']);
     }
 }

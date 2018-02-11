@@ -7,18 +7,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item {% if app.request.attributes.get('_route') == 'show_list' %}active{% endif %}">
-                    <a class="nav-link" href="{{ path('show_list') }}">List
+                <li class="nav-item {% if app.request.attributes.get('_route') == 'show_index' %}active{% endif %}">
+                    <a class="nav-link" href="{{ path('show_index') }}">Shows
                         <span class="sr-only">(current)</span>
                     </a>
                 </li>
-                <li class="nav-item {% if app.request.attributes.get('_route') == 'show_new' %}active{% endif %}"">
-                    <a class="nav-link" href="{{ path('show_new') }}">New Show
+                <li class="nav-item {% if app.request.attributes.get('_route') == 'show_create' %}active{% endif %}"">
+                    <a class="nav-link" href="{{ path('show_create') }}">New Show
                         <span class="sr-only">(current)</span>
                     </a>
                 </li>
-                <li class="nav-item {% if app.request.attributes.get('_route') == 'category_new' %}active{% endif %}"">
-                <a class="nav-link" href="{{ path('category_new') }}">New Category
+                <li class="nav-item {% if app.request.attributes.get('_route') == 'category_create' %}active{% endif %}"">
+                <a class="nav-link" href="{{ path('category_create') }}">New Category
                     <span class="sr-only">(current)</span>
                 </a>
                 </li>

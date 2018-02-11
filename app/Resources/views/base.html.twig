@@ -20,8 +20,8 @@
 
 <body>
 
-{#{% include "_includes/menu.html.twig" %}#}
-{% embed "_includes/menu.html.twig" %}
+{#{% include "_includes/navigation.html.twig" %}#}
+{% embed "_includes/navigation.html.twig" %}
     {% block menu_title %}
         {{ parent() }}by Ben
         {% if app.environment != 'prod' %}
@@ -58,20 +58,9 @@
         <!-- Sidebar Widgets Column -->
         <div class="col-md-4">
 
-            <!-- Search Widget -->
-            <div class="card my-4">
-                <h5 class="card-header">Search</h5>
-                <div class="card-body">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search for...">
-                        <span class="input-group-btn">
-                  <button class="btn btn-secondary" type="button">Go!</button>
-                </span>
-                    </div>
-                </div>
-            </div>
+            {% include "_includes/searchbar.html.twig" %}
 
-            {{ render(controller("AppBundle:Show:categories")) }}
+            {{ render(controller("AppBundle:Category:menu")) }}
 
             <!-- Side Widget -->
             <div class="card my-4">
