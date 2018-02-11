@@ -63,7 +63,7 @@ class ShowController extends Controller
 
         if ($form->isValid()) {
             $generatedFileName = $fileUploader->upload(
-                $show->getMainPicture(),
+                $show->getTmpPictureFile(),
                 $show->getCategory()->getName()
             );
 
@@ -94,13 +94,18 @@ class ShowController extends Controller
      */
     public function updateAction(Request $request, Show $show, FileUploader $fileUploader): Response
     {
-        $showForm = $this->createForm(ShowType::class, $show, ['validation_groups' => 'update']);
+        $showForm = $this->createForm(
+            ShowType::class,
+            $show,
+            ['validation_groups' => 'update',
+            'method' => 'PUT']
+        );
 
         $showForm->handleRequest($request);
 
         if ($showForm->isValid()) {
             $generatedFileName = $fileUploader->upload(
-                $show->getMainPicture(),
+                $show->getTmpPictureFile(),
                 $show->getCategory()->getName()
             );
 
