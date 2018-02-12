@@ -19,7 +19,9 @@ Intervenante : Sarah KHALIL
 9. [Doctrine (DBAL & ORM)](#doctrine-dbal--orm)
 10. [Validation](#validation)
 11. [Dependency Injection](#dependency-injection)
-12. [Autres](#autres)
+12. [Compiler Pass](#compiler-pass)
+13. [Events](#events)
+14. [Autres](#autres)
 
 ## Présentation du Framework 
 * Anecdote nom : Simple Framework = SF = SymFony. Simple = Sensio en ???
@@ -144,7 +146,8 @@ Intervenante : Sarah KHALIL
 * Depuis 3.3, la classe du container est généré lors du démarrage en environnement dans /var/cache/(env). Lors du chargement du kernel et du composant DI, les configuration de services sont lues.
 * La classe du conteneur contient un tableau de clés-valeurs de tags-methodnames ... ... ... listant les classes ayant été reconnues comme des services. Les dépendances entre ces services sont aussi résolues.
 * Autowiring : Toutes les classes dont le path correspond aux path configurés dans servies.yml seront instanciées et les instances seront injectées dans le container. injection dans constructeur ou mutateur grâce à un typehint de paramètre. 
-* Public/Private : accessiblité/restriction entre services dans le conteneur. Depuis 3.3, tous les services par défaut sont privés. La seule injection possible devient alors du wiring (auto ou non).
+* Public/Private : accessiblité/restriction d'accès aux services depuis l'extérieur du container. Depuis 3.3, tous les services par défaut sont privés. La seule injection possible devient alors du wiring (auto ou non).
+* Les conttrollers sont déclarés comme des services particuliers : toujours publics et déjà liés aux services de résolution de typehints (comme ParamConverter)
 * Seuls le controlleurs ont encore accès au container complet (grâce au trait ContainerAwareTrait), via $this->get('service').
 * La config des services (services.yml) permet de definir quelle classe monter en service automatiquement ou manuellement.
 * Les services à injecter implémentent une interface. C'est cette interface que le DI cherche à résoudre pour forcer les découplages. Le type du paramètre pour injecter un service est donc le type de l'interface qu'il implémente.
@@ -154,10 +157,17 @@ Intervenante : Sarah KHALIL
 
 ## Compiler Pass
 * Compiler Pass (CP) : Classe permettant de surcharger le comportement de chargement du container DI.
-* Équivalent PHP de la configuration yml du DI (services.yml)
+* Répertoire bundle/DependencyInjection
+* Équivalent PHP de la configuration yml du DI (services.yml).
 * La CP charge le service (1) qui recevra les injections, puis charge tous les services (2) dont le tag correspond à celui recherché. Enfin, il insère les 2 dans 1.
 * Le service (1) déclare pouvoir recevoir des injections de services implémentant une interface (2I), ce qui permet de pouvoir proposer plusieurs implémentations injectables.
 * La liste des dépendances (2) ne peut donc pas être injecté par le constructeur de (1) 
+* Le container dispose de deux états : normal et frozen. Il devient frozen (immutable) dès qu'il a fini d'être généré.
+* Lors du lancement de la phase de construction du container, les classes implémentant la CompilerPassInterface dans les divers bundles sont exécutées. Le container, encore en construction, est déjà mis à leur disposition (ou plutôt son builder).
+* Il est alors possible d'influencer la construction du container pour manuellement injecter des services dans d'autres.
+* requête HTTP -> AppKernel -> Kernel -> boot (création container builder) -> registerBundle([]) -> (foreach bundle) build(containerBuilder).
+* Lors du build du bundle, on vient donc utiliser le containerBuilder (créé par le kernel) pour manipuler les injections dans le container. La logique de manipulation est contenue dans la CP. Pour que la CP soit prise en compte par le builder/DI, on surcharge la méthode build de l'AppBundle (on récupère la logique parente pour commencer).
+* Il ne reste donc à 1: retrouver grâce au builder la définition du service cible (1) qui recevra les injections; 2: trouver dans cette définition la méthode à appeler pour injecter les dépendances; 3: trouver les services (2) ayant le tag souhaité; 4: injecter les (2) dans (1)
 
 ## Events
 * Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listener/subscriber.

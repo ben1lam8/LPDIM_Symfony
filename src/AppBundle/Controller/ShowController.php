@@ -4,6 +4,7 @@ namespace AppBundle\Controller;
 
 use AppBundle\Entity\Show;
 use AppBundle\File\FileUploader;
+use AppBundle\Search\ShowSearcher;
 use AppBundle\Type\ShowType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -25,20 +26,20 @@ class ShowController extends Controller
     /**
      * @Route("/", name="index")
      * @Method({"GET"})
+     * @param Request $request
+     * @param ShowSearcher $showSearcher
      * @return Response
      */
-    public function indexAction(Request $request): Response
+    public function indexAction(Request $request, ShowSearcher $showSearcher): Response
     {
-        $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show');
         $session = $request->getSession();
 
         if($session->has('query_search_shows')){
-            $showsQuery = $session->get('query_search_shows');
-            $shows = $repo->findAllByQuery($showsQuery);
+            $shows = $showSearcher->searchByName($session->get('query_search_shows'));
 
             $session->remove('query_search_shows');
         }else{
-            $shows = $repo->findAll();
+            $shows = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show')->findAll();
         }
 
         return $this->render(
@@ -147,7 +148,7 @@ class ShowController extends Controller
      * @param CsrfTokenManagerInterface $csrfTokenManager
      * @return Response
      */
-    public function deleteAction(Request $request, CsrfTokenManagerInterface $csrfTokenManager)
+    public function deleteAction(Request $request, CsrfTokenManagerInterface $csrfTokenManager): Response
     {
         $doctrine = $this->getDoctrine();
 
@@ -156,7 +157,7 @@ class ShowController extends Controller
         $show = $doctrine->getRepository('AppBundle:Show')->findOneById($showId);
 
         if(!$show){
-            throw new NotFoundHttpException("No show matching the id %d", $showId);
+            throw new NotFoundHttpException(sprintf("No show matching the id %d", $showId));
         }
 
         $csrfToken = new CsrfToken('delete_show', $request->request->get('_csrf_token'));
@@ -175,7 +176,7 @@ class ShowController extends Controller
 
     /**
      * @Route("/search", name="search")
-     * @Method({"DELETE"})
+     * @Method({"POST"})
      * @return Response
      * @param Request $request
      * @return Response
