@@ -9,7 +9,11 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManager;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 /**
  * Class TestController
@@ -23,9 +27,19 @@ class ShowController extends Controller
      * @Method({"GET"})
      * @return Response
      */
-    public function indexAction(): Response
+    public function indexAction(Request $request): Response
     {
-        $shows = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show')->findAll();
+        $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show');
+        $session = $request->getSession();
+
+        if($session->has('query_search_shows')){
+            $showsQuery = $session->get('query_search_shows');
+            $shows = $repo->findAllByQuery($showsQuery);
+
+            $session->remove('query_search_shows');
+        }else{
+            $shows = $repo->findAll();
+        }
 
         return $this->render(
             "show/index.html.twig",
@@ -126,7 +140,49 @@ class ShowController extends Controller
         );
     }
 
-    public function searchAction(): Response
+    /**
+     * @Route("/delete/{id}", name="delete", requirements={"id"="\d+"})
+     * @Method({"DELETE"})
+     * @param Request $request
+     * @param CsrfTokenManagerInterface $csrfTokenManager
+     * @return Response
+     */
+    public function deleteAction(Request $request, CsrfTokenManagerInterface $csrfTokenManager)
     {
+        $doctrine = $this->getDoctrine();
+
+        $showId = $request->request->get('show_id');
+
+        $show = $doctrine->getRepository('AppBundle:Show')->findOneById($showId);
+
+        if(!$show){
+            throw new NotFoundHttpException("No show matching the id %d", $showId);
+        }
+
+        $csrfToken = new CsrfToken('delete_show', $request->request->get('_csrf_token'));
+
+        if($csrfTokenManager->isTokenValid($csrfToken)){
+            $doctrine->getManager()->remove($show);
+            $doctrine->getManager()->flush();
+
+            $this->addFlash("success", "Show successfully deleted !");
+        }else{
+            $this->addFlash("danger", "Show not deleted. Invalid CSRF token !");
+        }
+
+        return $this->redirectToRoute("show_index");
+    }
+
+    /**
+     * @Route("/search", name="search")
+     * @Method({"DELETE"})
+     * @return Response
+     * @param Request $request
+     * @return Response
+     */
+    public function searchAction(Request $request): Response
+    {
+        $request->getSession()->set('query_search_shows', $request->request->get('query'));
+        return $this->redirectToRoute('show_index');
     }
 }

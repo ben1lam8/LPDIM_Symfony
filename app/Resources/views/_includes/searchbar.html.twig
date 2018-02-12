@@ -2,11 +2,17 @@
 <div class="card my-4">
     <h5 class="card-header">Search</h5>
     <div class="card-body">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search for...">
+        <form action={{ path('show_search') }} method="POST">
+            <div class="form-group">
+                <label class="control-label required" for="category_name">
+                    Name
+                </label>
+                <input type="text" id="category_name" name="query" required="required" class="form-control" placeholder="Search for..." />
+            </div>
+
             <span class="input-group-btn">
-                  <button class="btn btn-secondary" type="button" >Go!</button>
-            </span>
-        </div>
+          <button type="submit" class="btn-default btn">Go!</button>
+        </span>
+        </form>
     </div>
 </div>

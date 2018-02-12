@@ -5,6 +5,7 @@ Intervenante : Sarah KHALIL
 ## Dates
 * Lundi 05/02 (7h)
 * Mardi 06/02 (7h)
+* Lundi 12/02 (7h)
 
 ## Contenu
 1. [Présentation du Framework](#présentation-du-framework)
@@ -68,6 +69,7 @@ Intervenante : Sarah KHALIL
 * Le controller ordonne de calculer la vue conrrespondant à un template. Le chemin de ce template est d'abord cherché dans app/resources/views. Ensuite, il sera recherché dans les bundles, puis sous-bundles...
 * Le controller peut aussi rendre la vue comme du HTML (string) plutôt que comme une Response, grâce à renderVue(); Ce contenu doit donc être intégré à une Response (new Response($this->renderView('template'), HTTP_NOT_FOUND))
 * Il est possible de passer un tableau de variables vers le template (2eme paramètre de render()), pour que le rendu soit dynamique.
+* La partie DELETE du CRUD doit être sécurisée car sensible. L'action de suppression doit être appelé depuis l'application ! Il faut donc sécuriser la route (sa méthode) et utiliser un jeton CSRF pour nous assurer de l'origine de la Request.
 * 25 lignes max
 
 ## Twig & Templating
@@ -117,34 +119,51 @@ Intervenante : Sarah KHALIL
 * Les migrations sont tracables, et rollbackables. C'est plus lisible dans une PR et c'est défaisable si les conséquences sont graves pour la base.
 * bin/console doctrine:migrations:diff génère un fichier app/DoctrineMigration/Versionxxxxxx.php qui représente un instantanné du schéma (seulement).
 * bin/console doctrine:migrations:execute xxxxxxxx va executer la class Versionxxxxxxxx générée par diff et donc re-générer le schéma comme il l'était lors du diff.
-* un diff ajoute une entrée dans la table migrations_versions de la table du projet.
-* Tellement générique que finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
+* un execute ajoute une entrée dans la table migrations_versions de la table du projet.
+* bin/console doctrine:migrations:migrate : Pour que doctrine joue toutes les migrations postérieures à la migration actuelle de la base (déterminée à l'aide de la table migrations_versions dans la base).
+* Pour corriger/customiser une migration, il suffit de manipuler les classes PHP générées par diff. up() définit le comportement lors d'une montée en version d'un pas, down() définit le comportement lors d'une régression d'un pas.
+* Il peut être utile de regrouper les migrations au sein d'une seule classe/version, si possible.
+* Doctrine est tellement générique qu'il finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
 * Relations One-to-One, One-to-Many, etc.
 * ParamConverter : Service (?) de Doctrine qui repère transforme le contenu de la Request en une Entity (grâce à l'id contenu dans la route). Un simple typehint de paramètre de contrôleur permet donc de récupérer une entité.
 
 ## Validation
-* La validation est le fait d'impser des règles sur le type et les valeurs possible pour un attribut d'entité.
+* La validation est le fait d'imposer des règles sur le type et les valeurs possibles pour un attribut d'entité.
 * Il est aussi possible de vérifier l'unicité d'une entité (pas dans le composant validator mais dans un bridge de Doctrine). Cette unicité est vérifié à la validation, pas à l'insertion. Pour cela, il faut plutôt définir une règle ORM.
 * Toutes les contraintes et validateurs ne sont pas documentés. Vérifier dans les vendors.
-* Les fichiers et image disposent de contraintes et validator spécifiques.
+* Les fichiers et images disposent de contraintes et validator spécifiques.
+* Un groupe de validation default est créé par défaut. Si aucun contrainte n'est affectée à ce groupe, la validation d'une entité attachée à un formulaire n'a donc jamais lieu.
 * Attention : lors d'un update, s'il n'y a pas de nouvel upload pour un fichier, celui-ci sera vide et pourrait lever une erreur de validation. Il faut alors utiliser des groupes de validation : 1 correspondant à la création et 1 correspondant à la mise à jour.
 
 ## Dependency Injection
-* Dependance : classe, service, valeur, tableau qui se trouve ailleurs dans l'application et sont on souhaite disposer localement. En faisant directement appel à cette dépendance, on renforce le couplage.
+* Dependance : classe, service, valeur, tableau qui se trouve ailleurs dans l'application et dont on souhaite disposer localement. En faisant directement appel à cette dépendance, on renforce le couplage.
 * Pour disposer d'une dépendance localement en limitant au maximum le couplage, on injecte plutôt cette classe dans un emplacement générique prévu pour cela.
 * Les dépendances respectant ce schéma sont alors des services. Ces services sont listés dans un conteneur, et le composent DI se charge d'injecter ces services en tant que dépendances lors du démarrage de l'app.
 * Un service est une classe qui fournit des traitements. Le service doit être sans état : il ne doit pas dépendre lui-même d'un quelconque état de l'application. Un service doit fonctionner de la même manière à tout instant et depuis tout endroit de l'application.
 * Symfony dispose d'une classe particulière : un conteneur d'injection de dépendance.
 * Depuis 3.3, la classe du container est généré lors du démarrage en environnement dans /var/cache/(env). Lors du chargement du kernel et du composant DI, les configuration de services sont lues.
 * La classe du conteneur contient un tableau de clés-valeurs de tags-methodnames ... ... ... listant les classes ayant été reconnues comme des services. Les dépendances entre ces services sont aussi résolues.
-* Autowiring : injection dans constructeur ou mutateur grâce à un typehint de paramètre. 
+* Autowiring : Toutes les classes dont le path correspond aux path configurés dans servies.yml seront instanciées et les instances seront injectées dans le container. injection dans constructeur ou mutateur grâce à un typehint de paramètre. 
 * Public/Private : accessiblité/restriction entre services dans le conteneur. Depuis 3.3, tous les services par défaut sont privés. La seule injection possible devient alors du wiring (auto ou non).
 * Seuls le controlleurs ont encore accès au container complet (grâce au trait ContainerAwareTrait), via $this->get('service').
 * La config des services (services.yml) permet de definir quelle classe monter en service automatiquement ou manuellement.
-
+* Les services à injecter implémentent une interface. C'est cette interface que le DI cherche à résoudre pour forcer les découplages. Le type du paramètre pour injecter un service est donc le type de l'interface qu'il implémente.
 * Les fichiers de config (dev, prod et normal) sont associés à un fichier yml appelé parameters.yml qui contient des clés et valeurs utilisables dans les autres fichiers de config
 * Lors de l'execution du composer install, un script est appelé (Incenteev\\ParameterHandler\\ScriptHandler::buildParameters). Celui-ci va lire le parameters.yml.dist et générer le parameters.yml correspondant (comme un template), qui sera ensuite utilisable depuis les autres fichiers de config.
 * On versionne donc le fichier .yml.dist pour partager un schéma de paramètres mais on ne versionne pas parameters.yml, qui correspond à la configuration de l'environnement
+
+## Compiler Pass
+* Compiler Pass (CP) : Classe permettant de surcharger le comportement de chargement du container DI.
+* Équivalent PHP de la configuration yml du DI (services.yml)
+* La CP charge le service (1) qui recevra les injections, puis charge tous les services (2) dont le tag correspond à celui recherché. Enfin, il insère les 2 dans 1.
+* Le service (1) déclare pouvoir recevoir des injections de services implémentant une interface (2I), ce qui permet de pouvoir proposer plusieurs implémentations injectables.
+* La liste des dépendances (2) ne peut donc pas être injecté par le constructeur de (1) 
+
+## Events
+* Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listener/subscriber.
+* Le dispatcher de Symfony est un service unique qui se charge de notifier des abonnés de l'occurence d'un/des évènement(s)
+* Ainsi, des évènements peuvent déclencher des logiques greffées (hooks) n'importe où dans le code.
+
 
 ## Autres
 ### HTTP

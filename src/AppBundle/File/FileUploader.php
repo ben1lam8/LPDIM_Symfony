@@ -15,7 +15,7 @@ class FileUploader
         $this->uploadDir = $uploadDir;
     }
 
-    public function upload(UploadedFile $file, $salt)
+    public function upload(?UploadedFile $file, $salt)
     {
         $generatedFileName = time().'_'.$salt.'.'.$file->guessClientExtension();
         $path = $this->pathToProject.'/web'.$this->uploadDir;

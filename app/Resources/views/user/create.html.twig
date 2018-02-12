@@ -1,0 +1,13 @@
+{% extends "base.html.twig" %}
+
+{% block pageHeading %}
+    Create a user
+{% endblock %}
+{% block content %}
+
+    {{ form_start(userForm, {"attr":{"novalidate":"novalidate"}}) }}
+    {{ form_widget(userForm) }}
+        <input type="submit" value="Create">
+    {{ form_end(userForm) }}
+
+{% endblock %}
