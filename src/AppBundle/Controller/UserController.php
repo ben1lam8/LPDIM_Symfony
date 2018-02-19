@@ -24,13 +24,12 @@ class UserController extends Controller
      */
     public function createAction(Request $request): Response
     {
-
         $user = new User();
         $userForm = $this->createForm(UserType::class, $user);
 
         $userForm->handleRequest($request);
 
-        if($userForm->isValid()){
+        if ($userForm->isValid()) {
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);
             $em-> flush();

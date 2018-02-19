@@ -15,6 +15,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 class Show
 {
+    const DATA_SOURCE_DB = "Local database";
+    const DATA_SOURCE_OMDB = "OMDB API";
 
     /**
      * @var int
@@ -80,6 +82,12 @@ class Show
     private $tmpPictureFile;
 
     /**
+     * @var string
+     * @ORM\Column
+     */
+    private $dataSource;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -87,7 +95,11 @@ class Show
         return $this->id;
     }
 
-    // No Id setter
+    public function setId(int $id): Show
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return string
@@ -230,6 +242,24 @@ class Show
     public function setTmpPictureFile(File $tmpPictureFile): Show
     {
         $this->tmpPictureFile = $tmpPictureFile;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDataSource(): string
+    {
+        return $this->dataSource;
+    }
+
+    /**
+     * @param string $dataSource
+     * @return Show
+     */
+    public function setDataSource(string $dataSource): Show
+    {
+        $this->dataSource = $dataSource;
         return $this;
     }
 }

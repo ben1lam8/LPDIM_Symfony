@@ -3,7 +3,6 @@
 
 namespace AppBundle\Search;
 
-
 class ShowSearcher
 {
     private $finders;
@@ -12,8 +11,8 @@ class ShowSearcher
     {
         $results = [];
 
-        foreach($this->finders as $finder){
-            $results[$finder->getName()] = $finder->findByName($query);
+        foreach ($this->finders as $finder) {
+            $results = array_merge($results, $finder->findByName($query));
         }
 
         return $results;

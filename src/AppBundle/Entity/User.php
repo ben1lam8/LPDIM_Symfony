@@ -52,5 +52,4 @@ class User
         $this->fullName = $fullName;
         return $this;
     }
-
 }

@@ -125,6 +125,7 @@ Intervenante : Sarah KHALIL
 * bin/console doctrine:migrations:migrate : Pour que doctrine joue toutes les migrations postérieures à la migration actuelle de la base (déterminée à l'aide de la table migrations_versions dans la base).
 * Pour corriger/customiser une migration, il suffit de manipuler les classes PHP générées par diff. up() définit le comportement lors d'une montée en version d'un pas, down() définit le comportement lors d'une régression d'un pas.
 * Il peut être utile de regrouper les migrations au sein d'une seule classe/version, si possible.
+* doctrine:migrations:generate permet de créer un template de classe de migration déjà versionnée. Il ne reste plus qu'à y insérer la logique de migration(up et down) puis à faire un execute.
 * Doctrine est tellement générique qu'il finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
 * Relations One-to-One, One-to-Many, etc.
 * ParamConverter : Service (?) de Doctrine qui repère transforme le contenu de la Request en une Entity (grâce à l'id contenu dans la route). Un simple typehint de paramètre de contrôleur permet donc de récupérer une entité.

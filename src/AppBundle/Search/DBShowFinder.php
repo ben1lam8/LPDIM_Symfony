@@ -3,7 +3,7 @@
 
 namespace AppBundle\Search;
 
-
+use AppBundle\Entity\Show;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 class DBShowFinder implements ShowFinderInterface
@@ -17,7 +17,7 @@ class DBShowFinder implements ShowFinderInterface
 
     public function getName(): string
     {
-        return 'Local database';
+        return Show::DATA_SOURCE_DB;
     }
 
     public function findByName(string $query): array

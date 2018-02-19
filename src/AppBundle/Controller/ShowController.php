@@ -34,11 +34,11 @@ class ShowController extends Controller
     {
         $session = $request->getSession();
 
-        if($session->has('query_search_shows')){
+        if ($session->has('query_search_shows')) {
             $shows = $showSearcher->searchByName($session->get('query_search_shows'));
 
             $session->remove('query_search_shows');
-        }else{
+        } else {
             $shows = $this->getDoctrine()->getManager()->getRepository('AppBundle:Show')->findAll();
         }
 
@@ -156,18 +156,18 @@ class ShowController extends Controller
 
         $show = $doctrine->getRepository('AppBundle:Show')->findOneById($showId);
 
-        if(!$show){
+        if (!$show) {
             throw new NotFoundHttpException(sprintf("No show matching the id %d", $showId));
         }
 
         $csrfToken = new CsrfToken('delete_show', $request->request->get('_csrf_token'));
 
-        if($csrfTokenManager->isTokenValid($csrfToken)){
+        if ($csrfTokenManager->isTokenValid($csrfToken)) {
             $doctrine->getManager()->remove($show);
             $doctrine->getManager()->flush();
 
             $this->addFlash("success", "Show successfully deleted !");
-        }else{
+        } else {
             $this->addFlash("danger", "Show not deleted. Invalid CSRF token !");
         }
 
