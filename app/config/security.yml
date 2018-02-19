@@ -10,16 +10,16 @@ security:
         in_memory:
             memory:
                 users:
-                    random.user@memory.com:
-                        password: '$2y$13$WQJGpnlJ2T6z0C5FI6t34OQv7sVaO9Ey/IwJ4wUIj8J087bDFWgli' #user
-                        roles:    'ROLE_USER'
+                    admin@memory.local:
+                        password: '$2y$13$uzEfl/QkTmHBIMjY2gw./ec8zPAzYymGnzCNUZYk0Nmnqsk75QDm6' #admin
+                        roles:    'ROLE_ADMIN'
         user_db:
             entity:
                 class: AppBundle\Entity\User
                 property: email
 
     encoders:
-        Symfony\Component\Security\Core\User\User: bcrypt
+        Symfony\Component\Security\Core\User\User: bcrypt   #memory users encoder
         AppBundle\Entity\User: bcrypt   #or argon2i for php7.2+
 
     firewalls:
@@ -52,3 +52,7 @@ security:
 
             # https://symfony.com/doc/current/security/form_login_setup.html
             #form_login: ~
+
+    access_control:
+        - path: ^/user
+          roles: ['ROLE_ADMIN']

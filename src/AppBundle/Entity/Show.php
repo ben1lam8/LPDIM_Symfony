@@ -56,9 +56,9 @@ class Show
     private $country;
 
     /**
-     * @var string
-     * @ORM\Column
-     * @Assert\NotBlank(message="Please provide an author name for the show", groups={"create", "update"})
+     * @var User
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="shows")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
     private $author;
 
@@ -174,18 +174,18 @@ class Show
     }
 
     /**
-     * @return string
+     * @return User|null
      */
-    public function getAuthor(): ?string
+    public function getAuthor(): ?User
     {
         return $this->author;
     }
 
     /**
-     * @param string $author
+     * @param User $author
      * @return Show
      */
-    public function setAuthor(string $author): Show
+    public function setAuthor(User $author): Show
     {
         $this->author = $author;
         return $this;

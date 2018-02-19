@@ -18,7 +18,6 @@ class ShowType extends AbstractType
             ->add('category', EntityType::class, ['class' => Category::class, 'choice_label' => 'name'])
             ->add('abstract')
             ->add('country', CountryType::class, ['preferred_choices' => ['FR', 'UK', 'US']])
-            ->add('author')
             ->add('releaseDate')
             ->add('tmpPictureFile', FileType::class, ['label' => 'Main Picture']);
     }

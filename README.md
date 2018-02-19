@@ -188,13 +188,19 @@ Intervenante : Sarah KHALIL
 * FIREWALL (EventListener) : "zone" logique (routes) dont l'accès nécessite une authentification du User. Si un utilisateur demande une route "derrière" le firewall, il peut lui être demandé de se logguer.
 * La stratégie d'authentification peut varier : form_login, guard, etc. le provider diffère selon la stratégie. Dans tous les cas, le firewall redirige l'utilisateur vers une route lui permettant de s'authentifier (avec code 401).
 * PROVIDER (service): source locale ou distante fournissant les credentials au firewall pour vérifier l'authenfication. Il doit fournir au Firewall une instance de User.
-* chain provider : liste itérable de provider. Le firewall ira alors piocher tour à tour dans les sources de chaque provider fourni.
-* OAuth : à l'origine, oauth était destiné à l'autorisation plutôt qu'à l'autentification...
+* chain provider : liste itérable de providers. Le firewall ira alors piocher tour à tour dans les sources de chaque provider fourni.
+* OAuth : à l'origine, oauth était destiné à l'autorisation plutôt qu'à l'authentification...
 * ENCODER (service) : gestionnaire d'encodage des mots de passe et données. Hashe et compare.
 * Une instance d'encoder par type d'utilisateur.
 * Si l'encoder retourne un false (càd que ce qui est saisi, une fois hashé, ne correspond pas à ce qui est stocké), une redirection 401
 * bin/console security:encode-password <clear-password> : utilise l'encoder configuré pour encoder un password.
-* Bonne pratique : Une API devant être stateless, il faudra fournir une authentification à chaque endpoint. Il faut alors placer les routes de l'api derrière un FW.
+* Bonne pratique : Une API devant être stateless, il faudra fournir une authentification à chaque appel d'endpoint. Il faut alors placer les routes de l'api derrière un FW.
+* Autorisation / Acces Control : vérification du rôle de l'utilisateur identifié. Un service Symfony authorization_checker("access_decision_manager") est déjà disponible pour vérifier
+* Une twig extension utilise ce même service pour proposer l'extension isGranted();
+* Le comportement du checker est configurable. Il y a différentes stratégies possibles (affirmative, consensus, unanimous).
+* On n'appelle jamais directement un Voter, car checker->isGranted() fait le tour de tous les Voters pour décider de l'autorisation. Le contourner rend donc la décision de l'unique Voter non-fiable.
+* ACL : Access C*** List. Liste des permissions stockées en base. Les tables contenant les règles de permissions sont créées pas Symfo. Abandonné par la Core Team du framework au profit des Voters, car difficile à maintenir coté dev.
+* 
 
 ## Autres
 ### HTTP

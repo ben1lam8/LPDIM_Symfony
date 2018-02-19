@@ -3,6 +3,7 @@
 
 namespace AppBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -48,6 +49,17 @@ class User implements UserInterface
     private $salt;
 
     /**
+     * @var ArrayCollection
+     * @ORM\OneToMany(targetEntity="Show", mappedBy="author")
+     */
+    private $shows;
+
+    public function __construct()
+    {
+        $this->shows = new ArrayCollection();
+    }
+
+    /**
      * @return mixed
      */
     public function getId()
@@ -80,7 +92,7 @@ class User implements UserInterface
      */
     public function getRoles()
     {
-        return ['ROLE_USER'];
+        return ['ROLE_USER', 'ROLE_ADMIN'];
     }
 
     /**
@@ -124,5 +136,17 @@ class User implements UserInterface
     public function eraseCredentials()
     {
         // TODO: Implement eraseCredentials() method.
+    }
+
+    public function addShow(Show $show)
+    {
+        if(!$this->shows->contains($show))
+            $this->shows->add($show);
+    }
+
+    public function removeShow(Show $show)
+    {
+        //TODO: unlink show when show deleted
+        $this->shows->remove($show);
     }
 }

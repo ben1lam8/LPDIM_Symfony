@@ -38,6 +38,7 @@ class SecurityController extends Controller
     public function loginCheckAction()
     {
         // Hollow check action...
+        // Try yml routing if it's too ugly for you
     }
 
     /**
@@ -45,6 +46,11 @@ class SecurityController extends Controller
      */
     public function logoutAction()
     {
-        // Hollow check action...
+        // Hollow logout action...
+        // Try yml routing if it's too ugly for you
     }
+
+    //TODO : Add a complete implementation for a ROLE_ADMIN
+    //TODO : Show update/delete button only if connected user is the author.
+    //TODO : link user -> show
 }
