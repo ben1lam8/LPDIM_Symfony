@@ -1,0 +1,27 @@
+{% extends "base.html.twig" %}
+
+{% block pageHeading %}
+    List of users
+{% endblock %}
+
+{% block content %}
+    <table class="table">
+        <thead>
+            <th>#</th>
+            <th>Full Name</th>
+            <th>Username/Email</th>
+            <th>Roles</th>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td> {{ user.id }}</td>
+                <td> {{ user.fullname}}</td>
+                <td> {{ user.username }}</td>
+                <td> {{ user.roles|join(', ') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}

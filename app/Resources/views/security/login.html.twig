@@ -1,0 +1,24 @@
+{% extends "base.html.twig" %}
+
+{% block pageHeading %}
+    Please log in
+{% endblock %}
+{% block content %}
+
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error.messageKey|trans(error.messageData, 'security') }}
+        </div>
+    {% endif %}
+
+    <form action="{{ path('security_login_check') }}" method="post">
+        <label for="email">Email :</label>
+        <input type="text" id="email" name="email" value="{{ lastUsername }}" class="form-control"/>
+
+        <label for="password">Password :</label>
+        <input type="password" id="password" name="password" class="form-control"/>
+
+        <button type="submit" class="btn btn-primary">Connect</button>
+    </form>
+
+{% endblock %}

@@ -21,7 +21,8 @@ Intervenante : Sarah KHALIL
 11. [Dependency Injection](#dependency-injection)
 12. [Compiler Pass](#compiler-pass)
 13. [Events](#events)
-14. [Autres](#autres)
+14. [Sécurité](#sécurité)
+99. [Autres](#autres)
 
 ## Présentation du Framework 
 * Anecdote nom : Simple Framework = SF = SymFony. Simple = Sensio en ???
@@ -174,7 +175,26 @@ Intervenante : Sarah KHALIL
 * Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listener/subscriber.
 * Le dispatcher de Symfony est un service unique qui se charge de notifier des abonnés de l'occurence d'un/des évènement(s)
 * Ainsi, des évènements peuvent déclencher des logiques greffées (hooks) n'importe où dans le code.
+* Tout bundle peut utiliser le dispatcher de symfony pour emettre des évènements et permettre le hook dans son code.
 
+## Sécurité
+* Ce composant est développé sur un modèle fortement axé programmation événementielle.
+* La mise en place d'une sécurité passe principalement par la configuration du SecurityBundle.
+* La configuration de la sécurité ne devant se faire qu'une fois (quelque soit l'organisation des config d'environnemnt), cette config DOIT se trouver dans un seul fichier yml : security.yml.
+* 4 notions clés : User, Provider, Encoder, Firewall. Et faire la distinction entre l'authentification (qui ?) et l'autorisation (a-t-il le droit ?)
+* USER : La classe représentant ce user DOIT implémenter UserInterface ou AdvancedUserInterface du composant Security (la deuxième est un peu plus complète mais la première suffit)
+* Cette implémentation d'interface impose au User de contenir des credentials et des rôles attribués.
+* Pour désactiver totallement l'identification d'utilisateurs, il faut le déclarer explicitement dans la config.
+* FIREWALL (EventListener) : "zone" logique (routes) dont l'accès nécessite une authentification du User. Si un utilisateur demande une route "derrière" le firewall, il peut lui être demandé de se logguer.
+* La stratégie d'authentification peut varier : form_login, guard, etc. le provider diffère selon la stratégie. Dans tous les cas, le firewall redirige l'utilisateur vers une route lui permettant de s'authentifier (avec code 401).
+* PROVIDER (service): source locale ou distante fournissant les credentials au firewall pour vérifier l'authenfication. Il doit fournir au Firewall une instance de User.
+* chain provider : liste itérable de provider. Le firewall ira alors piocher tour à tour dans les sources de chaque provider fourni.
+* OAuth : à l'origine, oauth était destiné à l'autorisation plutôt qu'à l'autentification...
+* ENCODER (service) : gestionnaire d'encodage des mots de passe et données. Hashe et compare.
+* Une instance d'encoder par type d'utilisateur.
+* Si l'encoder retourne un false (càd que ce qui est saisi, une fois hashé, ne correspond pas à ce qui est stocké), une redirection 401
+* bin/console security:encode-password <clear-password> : utilise l'encoder configuré pour encoder un password.
+* Bonne pratique : Une API devant être stateless, il faudra fournir une authentification à chaque endpoint. Il faut alors placer les routes de l'api derrière un FW.
 
 ## Autres
 ### HTTP
@@ -190,6 +210,8 @@ Méthodes (verbs) HTTP à connaître pour une bonne API (modèle de Richardson) 
 * HEAD          get-response-headers-only
 * OPTIONS       get-available-actions
 * TRACE         get-vias ?
+
+* 401 : code unauthorized
 
 Headers custom: X-...
 Voir easter-eggs dans les headers (exemple de sensiolabs.com)

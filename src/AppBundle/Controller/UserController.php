@@ -8,6 +8,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 
 /**
  * Class UserController
@@ -18,11 +19,26 @@ class UserController extends Controller
 {
 
     /**
-     * @Route("/create", name="create")
-     * @param Request $request
+     * @Route("/", name="index")
      * @return Response
      */
-    public function createAction(Request $request): Response
+    public function indexAction(): Response
+    {
+        $users = $this->getDoctrine()->getManager()->getRepository('AppBundle:User')->findAll();
+
+        return $this->render(
+            "user/index.html.twig",
+            ['users' => $users]
+        );
+    }
+
+    /**
+     * @Route("/create", name="create")
+     * @param Request $request
+     * @param EncoderFactoryInterface $encoderFactory
+     * @return Response
+     */
+    public function createAction(Request $request, EncoderFactoryInterface $encoderFactory): Response
     {
         $user = new User();
         $userForm = $this->createForm(UserType::class, $user);
@@ -31,6 +47,12 @@ class UserController extends Controller
 
         if ($userForm->isValid()) {
             $em = $this->getDoctrine()->getManager();
+
+            $encoder = $encoderFactory->getEncoder($user);
+            $hashedPassword = $encoder->encodePassword($user->getPassword(), null);
+
+            $user->setPassword($hashedPassword);
+
             $em->persist($user);
             $em-> flush();
 
