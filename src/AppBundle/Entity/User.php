@@ -5,10 +5,10 @@ namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\PersistentCollection;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * Class User
@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @ORM\Entity
  * @ORM\Table(name="user")
  * @UniqueEntity("email")
+ * @JMS\ExclusionPolicy("all")
  */
 class User implements UserInterface
 {
@@ -23,12 +24,16 @@ class User implements UserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @JMS\Expose
+     * @JMS\Groups({"user"})
      */
     private $id;
 
     /**
      * @var string
      * @ORM\Column
+     * @JMS\Expose
+     * @JMS\Groups({"user", "show"})
      */
     private $fullName;
 
@@ -42,6 +47,8 @@ class User implements UserInterface
      * @var string
      * @ORM\Column
      * @Assert\Email
+     * @JMS\Expose
+     * @JMS\Groups({"user"})
      */
     private $email;
 
@@ -152,13 +159,14 @@ class User implements UserInterface
 
     public function addShow(Show $show)
     {
-        if(!$this->shows->contains($show))
+        if (!$this->shows->contains($show)) {
             $this->shows->add($show);
+        }
     }
 
     public function removeShow(Show $show)
     {
-        //TODO: unlink show when show deleted
+        // TODO: unlink show when user deleted ?
         $this->shows->remove($show);
     }
 

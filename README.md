@@ -221,7 +221,10 @@ Intervenante : Sarah KHALIL
 * Hypermedia : endpoints des resources liées.
 * Bundles : FOSRestBundle et ApiPlatform. Bazinga???Bundle
 * Endpoint : équivalent d'un controller (logique de route) mais la Response ne contient pas de template.
-* Serialization : composant Serializer de Symfony ou JMSSerializeBundle
+* Serialization : composant Serializer de Symfony ou JMSSerializeBundle.
+* Le service 'serializer' est un service dont le type d'instance dépend du serializer configuré.
+* Exclusion/Exposition : le bundle de JMS permet de configurer quels attributs masquer ou exposer dans la réponse sérialisée. Préférer tout exclure d'abord et exposer au compte goutte.
+* Groupes de sérialization : configurations de sérialization indépendantes. Il est possible de sérializer d'une manière ou d'une autre, selon le contexte. (même principe que les groupes de validation)
 
 ## Autres
 ### HTTP

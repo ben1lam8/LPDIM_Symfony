@@ -3,14 +3,12 @@
 
 namespace AppBundle\Security\Authorization;
 
-
 use AppBundle\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class UserVoter extends Voter
 {
-
     const SUPPORTED_ATTRIBUTES = ["ROLE_ADMIN"];
 
     /**
@@ -43,11 +41,10 @@ class UserVoter extends Voter
          */
         $user = $token->getUser();
 
-        if(!$user instanceof User){
+        if (!$user instanceof User) {
             return false;
         }
-
-
+        
         /**
          * @var string
          */

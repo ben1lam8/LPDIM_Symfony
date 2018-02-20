@@ -49,6 +49,4 @@ class SecurityController extends Controller
         // Hollow logout action...
         // Try yml routing if it's too ugly for you
     }
-
-    //TODO : Add a complete implementation for a ROLE_ADMIN
 }

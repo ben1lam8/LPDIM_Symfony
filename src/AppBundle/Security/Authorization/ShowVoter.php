@@ -3,7 +3,6 @@
 
 namespace AppBundle\Security\Authorization;
 
-
 use AppBundle\Entity\Show;
 use AppBundle\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;

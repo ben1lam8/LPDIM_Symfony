@@ -4,12 +4,14 @@ namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * Class Category
  * @package AppBundle\Entity
  * @ORM\Entity
  * @UniqueEntity("name", message="{{value}} is already in database")
+ * @JMS\ExclusionPolicy("all")
  */
 class Category
 {
@@ -19,12 +21,15 @@ class Category
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @JMS\Expose
+     * @JMS\Groups({"category"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", unique=true)
-     * @var string
+     * @JMS\Expose
+     * @JMS\Groups({"category", "show"})
      */
     private $name;
 

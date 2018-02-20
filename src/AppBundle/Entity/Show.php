@@ -6,12 +6,14 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * Class Show
  * @package AppBundle\Entity
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ShowRepository")
  * @ORM\Table(name="s_show")
+ * @JMS\ExclusionPolicy("all")
  */
 class Show
 {
@@ -23,6 +25,8 @@ class Show
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $id;
 
@@ -30,6 +34,8 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a name for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show", "user", "category"})
      */
     private $name;
 
@@ -38,6 +44,8 @@ class Show
      * @ORM\ManyToOne(targetEntity="Category")
      * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      * @Assert\NotBlank(message="Please provide a category for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $category;
 
@@ -45,6 +53,8 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide an abstract for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $abstract;
 
@@ -52,6 +62,8 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a country for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $country;
 
@@ -59,6 +71,8 @@ class Show
      * @var User
      * @ORM\ManyToOne(targetEntity="User", inversedBy="shows")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $author;
 
@@ -66,6 +80,8 @@ class Show
      * @var \DateTime
      * @ORM\Column(type="date")
      * @Assert\NotBlank(message="Please provide a release date for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show"})
      */
     private $releaseDate;
 

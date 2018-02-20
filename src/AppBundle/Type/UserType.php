@@ -27,7 +27,8 @@ class UserType extends AbstractType
                 'first_options' => ['label' => 'Password'],
                 'second_options' => ['label' => 'Confirm password'],
                 'invalid_message' => 'Passwords must match...'
-                ])
+                ]
+            )
             ->add('roles', TextType::class, ['label' => 'Roles (separated by commas)'])
         ;
 
@@ -36,10 +37,11 @@ class UserType extends AbstractType
                 new CallbackTransformer(
                     function ($rolesAsArray) {
                         // Model -> View
-                        if(!empty($rolesAsArray))
+                        if (!empty($rolesAsArray)) {
                             return implode(',', $rolesAsArray);
-                        else
+                        } else {
                             return '';
+                        }
                     },
                     function ($rolesAsString) {
                         return explode(',', $rolesAsString);
