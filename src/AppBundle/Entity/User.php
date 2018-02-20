@@ -5,6 +5,7 @@ namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\PersistentCollection;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -44,6 +45,10 @@ class User implements UserInterface
      */
     private $email;
 
+    /**
+     * @var string[]
+     * @ORM\Column(type="json_array")
+     */
     private $roles;
 
     private $salt;
@@ -92,7 +97,14 @@ class User implements UserInterface
      */
     public function getRoles()
     {
-        return ['ROLE_USER', 'ROLE_ADMIN'];
+        return $this->roles;
+    }
+
+    public function setRoles($roles)
+    {
+        $this->roles = $roles;
+
+        return $this;
     }
 
     /**
@@ -148,5 +160,10 @@ class User implements UserInterface
     {
         //TODO: unlink show when show deleted
         $this->shows->remove($show);
+    }
+
+    public function getShows()
+    {
+        return $this->shows;
     }
 }

@@ -92,6 +92,8 @@ Intervenante : Sarah KHALIL
 * Si la conversion de donnée entité-widget est trop complexe pour être 'deviné' par le framework, il faut fournir un DataTransformer entre le vue et le modèle.
 * Ex: transfomer un array (model) en checkboxes (vue), il faut un ModelTransformer (sous-classe de DataTransformer pour le sens model vers vue). Ce type de DataTransformer simple est sans doute déjà implémenté dans Symfony...
 * Ex: un DateTime en model correspond à plusieurs widget select box en vue.
+* Ex: un Array en model correspond à une chaine (cf sécurité -> rôles)
+* View Transformer vs. Model Transformer : ordre de conversion. Le composant formulaire appelle d'abord le callback transform() puis le callback reverseTransform(). Dans un Model Transformer, transform() gère la conversion Model -> View. C'est le contraire pour un View Transformer.
 * La représentation intermédiaire d'un formulaire, entre son model et sa vue, est appelée 'normalized'.
 * La génération d'une vue de formulaire suit un processus dont les étapes sont toujours dans le même ordre. Ces étapes donnent lieux à des évènements (FormEvents). En créant des listeners/subscribers abonnés à ces évenements, il est possible d'influencer le rendu de la vue.
 * Le bouton submit du formulaire est à détacher du Type. C'est le moteur qui doit le générer. Il convient donc d'éclater le rendu du formulaire dans le moteur : form_start(form), form_widget(form), form_rest(form), <input type="submit">, form_end(form)
@@ -178,15 +180,18 @@ Intervenante : Sarah KHALIL
 * Tout bundle peut utiliser le dispatcher de symfony pour emettre des évènements et permettre le hook dans son code.
 
 ## Sécurité
+* Source : https://speakerdeck.com/saro0h/symfonycon-paris-dig-in-security
 * Ce composant est développé sur un modèle fortement axé programmation événementielle.
 * La mise en place d'une sécurité passe principalement par la configuration du SecurityBundle.
 * La configuration de la sécurité ne devant se faire qu'une fois (quelque soit l'organisation des config d'environnemnt), cette config DOIT se trouver dans un seul fichier yml : security.yml.
-* 4 notions clés : User, Provider, Encoder, Firewall. Et faire la distinction entre l'authentification (qui ?) et l'autorisation (a-t-il le droit ?)
+* 4 notions clés : User, Provider, Encoder, Firewall. Et faire la distinction entre l'authentification (qui ?) et l'autorisation (a-t-il le droit ?). On parle aussi plutôt d'authentification plutôt que de connexion, car il existe un status authentifié mais anonyme.
 * USER : La classe représentant ce user DOIT implémenter UserInterface ou AdvancedUserInterface du composant Security (la deuxième est un peu plus complète mais la première suffit)
 * Cette implémentation d'interface impose au User de contenir des credentials et des rôles attribués.
 * Pour désactiver totallement l'identification d'utilisateurs, il faut le déclarer explicitement dans la config.
-* FIREWALL (EventListener) : "zone" logique (routes) dont l'accès nécessite une authentification du User. Si un utilisateur demande une route "derrière" le firewall, il peut lui être demandé de se logguer.
-* La stratégie d'authentification peut varier : form_login, guard, etc. le provider diffère selon la stratégie. Dans tous les cas, le firewall redirige l'utilisateur vers une route lui permettant de s'authentifier (avec code 401).
+* FIREWALL (EventListener) : "zone" logique (routes) dont l'accès nécessite une authentification du User. Si un utilisateur demande une route "derrière" le firewall, il peut lui être demandé de se logguer via un authenticator.
+* La stratégie d'authentification/l'authenticator peut varier : form_login, guard, etc. En cas de succès, L'authenticator retourne un token au FW. Ce token correspondant à l'utilisateur.
+* Le provider diffère selon la stratégie de sauvagarde des credentials.
+* Dans tous les cas, le FW redirige l'utilisateur vers une route lui permettant de s'authentifier (avec code 401).
 * PROVIDER (service): source locale ou distante fournissant les credentials au firewall pour vérifier l'authenfication. Il doit fournir au Firewall une instance de User.
 * chain provider : liste itérable de providers. Le firewall ira alors piocher tour à tour dans les sources de chaque provider fourni.
 * OAuth : à l'origine, oauth était destiné à l'autorisation plutôt qu'à l'authentification...
@@ -199,8 +204,24 @@ Intervenante : Sarah KHALIL
 * Une twig extension utilise ce même service pour proposer l'extension isGranted();
 * Le comportement du checker est configurable. Il y a différentes stratégies possibles (affirmative, consensus, unanimous).
 * On n'appelle jamais directement un Voter, car checker->isGranted() fait le tour de tous les Voters pour décider de l'autorisation. Le contourner rend donc la décision de l'unique Voter non-fiable.
+* Les controllers ont accès à une méthode getUser() qui permet de récupérer l'instance du User authentifié. Si le controller n'est pas dans une zone gérée par un FW, cette méthode ne rendra rien.
+* La méthode getUser est un raccourci fourni par le ControllerTrait. En réalité, le User est récupéré grâce à la méthode getUser() du service security.token_storage.
+* Lors de l'authentification d'un User, un token est généré par l'authenticator (comme form_login) 
+* Les roles peuvent être organisées en hierarchie pour que le user n'enregistre que l'étiquette correspondant à son unique rôle hierarchisé. Ils peuvent aussi ête stockées avec des valeurs multiples pour le User, grâce à une sérialisation (cf. Doctrine type json-array, par exemple)
+* VOTER : service (taggué security.voter) qui implemente la classe abstraite Voter. 2 méthodes imposées par Voter (et son interface) : supports() et voteOnAttribute();
+* voteOnAttribute() : contient la logique de décision d'autorisation d'accès de l'utilisateur à un sujet (subject) selon les attributs passés. Retourne true si accès autorisé, false sinon.
+* supports() : vérifie que le subject et les attributs concernent bien le Voter.
+* L'implémentation d'un Voter permet d'accéder à l'autorisation avec isGranted()/is_granted() seulement, au lieu de faire de la logique complexe de vérification dans un controller ou un template.
+* Une route pouvant être requêtée à la main, il faut aussi imposer la vérification d'autorisation d'accès à un controller, si nécessaire. Pour cela, on fait appel à la méthode denyAccessUnlessGranted('ROLE_ADMIN') offerte par le ControllerTrait;
 * ACL : Access C*** List. Liste des permissions stockées en base. Les tables contenant les règles de permissions sont créées pas Symfo. Abandonné par la Core Team du framework au profit des Voters, car difficile à maintenir coté dev.
-* 
+* Type particulier disponible pour un remplacement de password (old + new + confirm) : (???)
+
+## API
+* Rest : architecture d'interface d'application. Échelle d'évaluation : modèle de maturité de Richarson. Stateless !!!
+* Hypermedia : endpoints des resources liées.
+* Bundles : FOSRestBundle et ApiPlatform. Bazinga???Bundle
+* Endpoint : équivalent d'un controller (logique de route) mais la Response ne contient pas de template.
+* Serialization : composant Serializer de Symfony ou JMSSerializeBundle
 
 ## Autres
 ### HTTP
@@ -217,7 +238,14 @@ Méthodes (verbs) HTTP à connaître pour une bonne API (modèle de Richardson) 
 * OPTIONS       get-available-actions
 * TRACE         get-vias ?
 
+Modèle de maturité de Richardson:
+0 : 1 resource/endpoint, tout en POST ("Swamp of POX")
+1 : n resources/endpoints, tout en POST
+2 : n resources/endpoints, methodes HTTP
+3 : n resources/endpoints, methodes HTTP, hypermedia controls
+
 * 401 : code unauthorized
+* 403 : code authorized
 
 Headers custom: X-...
 Voir easter-eggs dans les headers (exemple de sensiolabs.com)

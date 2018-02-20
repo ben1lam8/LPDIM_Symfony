@@ -84,7 +84,7 @@ class ShowController extends Controller
 
             $show->setMainPicture($generatedFileName);
 
-            $show->setAuthor($this->get('security.token_storage')->getToken()->getUser());
+            $show->setAuthor($this->getUser());
             $show->setDataSource(Show::DATA_SOURCE_DB);
 
             $em = $this->getDoctrine()->getManager();

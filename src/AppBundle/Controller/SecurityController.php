@@ -51,6 +51,4 @@ class SecurityController extends Controller
     }
 
     //TODO : Add a complete implementation for a ROLE_ADMIN
-    //TODO : Show update/delete button only if connected user is the author.
-    //TODO : link user -> show
 }

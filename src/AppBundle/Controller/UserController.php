@@ -18,6 +18,9 @@ use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 class UserController extends Controller
 {
 
+    //TODO: updateAction, deleteAction, etc. + beware of granted accesses
+    // via options ? monter type en service avec injections ?
+
     /**
      * @Route("/", name="index")
      * @return Response
@@ -40,6 +43,8 @@ class UserController extends Controller
      */
     public function createAction(Request $request, EncoderFactoryInterface $encoderFactory): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
         $user = new User();
         $userForm = $this->createForm(UserType::class, $user);
 
