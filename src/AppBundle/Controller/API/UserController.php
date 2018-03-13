@@ -7,6 +7,8 @@ use AppBundle\Entity\User;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Swagger\Annotations as Doc;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,8 +24,17 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserController extends AbstractAPIController
 {
     /**
-     * @Route("/users", name="index")
+     * @Route("/user", name="index")
      * @Method({"GET"})
+     * @Doc\Tag(name="users")
+     * @Doc\Response(
+     *     response=200,
+     *     description="Return all the users details",
+     *     @Doc\Schema(
+     *         type="array",
+     *         @Model(type=User::class, groups={"user_show"})
+     *     )
+     * )
      * @param SerializerInterface $serializer
      * @return Response
      */
@@ -31,15 +42,13 @@ class UserController extends AbstractAPIController
     {
         $users = $this->getDoctrine()->getManager()->getRepository('AppBundle:User')->findAll();
 
-        $serializationGroups = SerializationContext::create()->setGroups(['user']);
+        $serializationGroups = SerializationContext::create()->setGroups(['user_show']);
 
         return $this->respondWithJson(
-            new Response(
-                $serializer->serialize(
-                    $users,
-                    'json',
-                    $serializationGroups
-                )
+            $serializer->serialize(
+                $users,
+                'json',
+                $serializationGroups
             ),
             Response::HTTP_OK
         );
@@ -48,29 +57,64 @@ class UserController extends AbstractAPIController
     /**
      * @Route("/user/{id}", name="show", requirements={"id"="\d+"})
      * @Method({"GET"})
+     * @Doc\Tag(name="users")
+     * @Doc\Parameter(
+     *     name="id",
+     *     in="path",
+     *     type="string",
+     *     description="The id of the user to be detailed"
+     * )
+     * @Doc\Response(
+     *     response=200,
+     *     description="Return a user details",
+     *     @Doc\Schema(
+     *         @Model(type=User::class, groups={"user_show"})
+     *     )
+     * )
+     * @Doc\Response(
+     *     response=404,
+     *     description="No user matches this id",
+     * )
      * @param SerializerInterface $serializer
      * @param User $user
      * @return Response
      */
     public function showAction(SerializerInterface $serializer, User $user): Response
     {
-        $serializationGroups = SerializationContext::create()->setGroups(['user']);
+        $serializationGroups = SerializationContext::create()->setGroups(['user_show']);
 
         return $this->respondWithJson(
-            new Response(
-                $serializer->serialize(
-                    $user,
-                    'json',
-                    $serializationGroups
-                )
+            $serializer->serialize(
+                $user,
+                'json',
+                $serializationGroups
             ),
             Response::HTTP_OK
         );
     }
 
     /**
-     * @Route("/users", name="create")
+     * @Route("/user", name="create")
      * @Method({"POST"})
+     * @Doc\Tag(name="users")
+     * @Doc\Parameter(
+     *      name="user",
+     *      in="body",
+     *      type="json",
+     *      description="data for the user to be created",
+     *      required=false,
+     *      @Doc\Schema(
+     *          @Model(type=User::class, groups={"user_create"})
+     *      )
+     * )
+     * @Doc\Response(
+     *     response=201,
+     *     description="The user has been successfully created",
+     * )
+     * @Doc\Response(
+     *     response=400,
+     *     description="The user couldn't have been created, due to following validation errors.",
+     * )
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param ValidatorInterface $validator
@@ -79,14 +123,13 @@ class UserController extends AbstractAPIController
      */
     public function createAction(Request $request, SerializerInterface $serializer, ValidatorInterface $validator, EncoderFactoryInterface $encoderFactory): Response
     {
-        $deserializationGroups = DeserializationContext::create()->setGroups(['user', 'user_create']);
+        $deserializationGroups = DeserializationContext::create()->setGroups(['user_show', 'user_create']);
 
         $user = $serializer->deserialize($request->getContent(), User::class, 'json', $deserializationGroups);
 
-        $constraintValidationList = $validator->validate($user);
+        $constraintViolationList = $validator->validate($user);
 
-        if($constraintValidationList->count() === 0)
-        {
+        if ($constraintViolationList->count() === 0) {
             $em = $this->getDoctrine()->getManager();
 
             $encoder = $encoderFactory->getEncoder($user);
@@ -102,11 +145,9 @@ class UserController extends AbstractAPIController
         }
 
         return $this->respondWithJson(
-            new Response(
-                $serializer->serialize(
-                    $constraintValidationList,
-                    'json'
-                )
+            $serializer->serialize(
+                $constraintViolationList,
+                'json'
             ),
             Response::HTTP_BAD_REQUEST
         );

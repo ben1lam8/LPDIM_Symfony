@@ -26,7 +26,7 @@ class Show
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show"})
      */
     private $id;
 
@@ -35,7 +35,7 @@ class Show
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a name for the show", groups={"create", "update"})
      * @JMS\Expose
-     * @JMS\Groups({"show", "user", "category"})
+     * @JMS\Groups({"show_show", "show_update", "user_show", "category_show"})
      */
     private $name;
 
@@ -45,7 +45,7 @@ class Show
      * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      * @Assert\NotBlank(message="Please provide a category for the show", groups={"create", "update"})
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $category;
 
@@ -54,7 +54,7 @@ class Show
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide an abstract for the show", groups={"create", "update"})
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $abstract;
 
@@ -63,7 +63,7 @@ class Show
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a country for the show", groups={"create", "update"})
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $country;
 
@@ -72,7 +72,7 @@ class Show
      * @ORM\ManyToOne(targetEntity="User", inversedBy="shows")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $author;
 
@@ -81,7 +81,7 @@ class Show
      * @ORM\Column(type="date")
      * @Assert\NotBlank(message="Please provide a release date for the show", groups={"create", "update"})
      * @JMS\Expose
-     * @JMS\Groups({"show"})
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $releaseDate;
 
@@ -147,7 +147,7 @@ class Show
      * @param Category $category
      * @return Show
      */
-    public function setCategory(Category $category): Show
+    public function setCategory(?Category $category): Show
     {
         $this->category = $category;
         return $this;
@@ -201,8 +201,12 @@ class Show
      * @param User $author
      * @return Show
      */
-    public function setAuthor(User $author): Show
+    public function setAuthor(?User $author): Show
     {
+        if ($this->author != null) {
+            $this->author->removeShow($this);
+        }
+
         $this->author = $author;
         return $this;
     }
@@ -277,5 +281,14 @@ class Show
     {
         $this->dataSource = $dataSource;
         return $this;
+    }
+
+    public function update(Show $otherShow)
+    {
+        foreach ($otherShow as $attribute => $newValue) {
+            if (!empty($newValue)) {
+                $this->$attribute = $newValue;
+            }
+        }
     }
 }

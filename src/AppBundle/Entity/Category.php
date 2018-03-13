@@ -23,7 +23,7 @@ class Category
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @JMS\Expose
-     * @JMS\Groups({"category"})
+     * @JMS\Groups({"category_show", "show_update"})
      */
     private $id;
 
@@ -31,7 +31,7 @@ class Category
      * @ORM\Column(type="string", unique=true)
      * @Assert\NotBlank
      * @JMS\Expose
-     * @JMS\Groups({"category", "show"})
+     * @JMS\Groups({"category_show", "category_update", "show_show"})
      */
     private $name;
 
@@ -63,8 +63,15 @@ class Category
         return $this;
     }
 
-    public function update(Category $category)
+    /**
+     * @param Category $otherCategory
+     */
+    public function update(Category $otherCategory)
     {
-        $this->name = $category->getName();
+        foreach ($otherCategory as $attribute => $newValue) {
+            if (!empty($newValue)) {
+                $this->$attribute = $newValue;
+            }
+        }
     }
 }

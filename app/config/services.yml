@@ -50,3 +50,8 @@ services:
 
     AppBundle\Security\Authorization\UserVoter:
         tags: ['security.voter']
+
+    AppBundle\Serializer\Subscriber\ShowSubscriber:
+        calls:
+            - ['setEntityManager', ['@doctrine.orm.entity_manager']]
+        tags: [jms_serializer.event_subscriber]

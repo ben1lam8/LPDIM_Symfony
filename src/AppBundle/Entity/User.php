@@ -25,7 +25,7 @@ class User implements UserInterface
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @JMS\Expose
-     * @JMS\Groups({"user"})
+     * @JMS\Groups({"user_show", "show_update"})
      */
     private $id;
 
@@ -33,7 +33,7 @@ class User implements UserInterface
      * @var string
      * @ORM\Column
      * @JMS\Expose
-     * @JMS\Groups({"user", "show"})
+     * @JMS\Groups({"user_show", "user_create", "show_show"})
      */
     private $fullName;
 
@@ -42,7 +42,7 @@ class User implements UserInterface
      * @ORM\Column
      * @Assert\NotBlank
      * @JMS\Expose
-     * @JMS\Groups({"user", "user_create"})
+     * @JMS\Groups({"user_show", "user_create"})
      * @JMS\Type("string")
      */
     private $password;
@@ -52,7 +52,7 @@ class User implements UserInterface
      * @ORM\Column
      * @Assert\Email
      * @JMS\Expose
-     * @JMS\Groups({"user"})
+     * @JMS\Groups({"user_show", "user_create"})
      */
     private $email;
 
@@ -60,7 +60,7 @@ class User implements UserInterface
      * @var string[]
      * @ORM\Column(type="json_array")
      * @JMS\Expose
-     * @JMS\Groups({"user", "create"})
+     * @JMS\Groups({"user_show", "user_create"})
      * @JMS\Type("string")
      */
     private $roles;
@@ -174,7 +174,9 @@ class User implements UserInterface
     public function removeShow(Show $show)
     {
         // TODO: unlink show when user deleted ?
-        $this->shows->remove($show);
+        if (!empty($this->shows)) {
+            $this->shows->remove($show);
+        }
     }
 
     public function getShows()

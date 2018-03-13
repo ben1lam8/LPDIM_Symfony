@@ -78,7 +78,13 @@ csa_guzzle:
             config:
                 base_uri: 'http://www.omdbapi.com'
 
+# API Documentation
 nelmio_api_doc:
-    areas:
-        path_patterns: # an array of regexps
-            - ^/api(?!/doc$)
+  areas:
+      path_patterns: # an array of regexps
+          - ^/api(?!/doc$)
+  documentation:
+          info:
+              title: Shows [Ben]
+              description: Not another open wiki sandbox about shows...
+              version: 0.9.0

@@ -9,13 +9,6 @@ Intervenante : Sarah KHALIL
 * Lundi 19/02 (7h)
 * Mardi 20/02 (7h)
 
-## TODO (13/03):
-* suivre PSR1 et 2 (constantes, propriétés privées à public, constructeur, méthodes, alternance getters/setters dans l'ordre des propriétés)
-* Compléter l'API
-* Documenter l'API
-* Bonus front et/ou fonctionnalité API
-* Donner l'adresse de la PR
-
 ## Contenu
 1. [Présentation du Framework](#présentation-du-framework)
 2. [Installation](#installation)
@@ -234,7 +227,7 @@ Intervenante : Sarah KHALIL
 * Le service 'serializer' est un service dont le type d'instance dépend du serializer configuré.
 * Exclusion/Exposition : le bundle de JMS permet de configurer quels attributs masquer ou exposer dans la réponse sérialisée. Préférer tout exclure d'abord et exposer au compte goutte.
 * Groupes de sérialization : configurations de sérialization indépendantes. Il est possible de sérializer d'une manière ou d'une autre, selon le contexte. (même principe que les groupes de validation)
-* Documentation : NelmioApiDocBundle. Va générer une page de documentation routable. (vérifier installation des assets lors de l'installtion de la dépendance)
+* Documentation : NelmioApiDocBundle. Va générer une page de documentation routable. (vérifier installation des assets lors de l'installation de la dépendance)
 * Veiller à ce que la page de doc soit accessible (FW...)
 
 ## Autres
