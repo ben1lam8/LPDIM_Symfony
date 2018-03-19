@@ -34,6 +34,14 @@ security:
 
         api:
             pattern: ^/api
+            stateless: true
+            provider: user_db
+            guard:
+                authenticators:
+                    - AppBundle\Security\Authentication\ApiUserPasswordAuthenticator
+
+        api_doc:
+            pattern: ^/api/doc
             anonymous: ~
 
         secured_area:
