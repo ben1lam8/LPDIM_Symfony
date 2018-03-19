@@ -52,6 +52,12 @@ services:
         tags: ['security.voter']
 
     AppBundle\Serializer\Subscriber\ShowSubscriber:
-        calls:
-            - ['setEntityManager', ['@doctrine.orm.entity_manager']]
-        tags: [jms_serializer.event_subscriber]
+        tags: ['jms_serializer.event_subscriber']
+
+    # If you prefer a handler...
+    # AppBundle\Serializer\Handler\ShowHandler:
+        # tags: ['jms_serializer.subscribing_handler']
+
+    AppBundle\Security\Authentication\ApiUserPasswordAuthenticator:
+        arguments:
+            $encoderFactory: '@security.encoder_factory.generic'
