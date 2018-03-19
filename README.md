@@ -264,6 +264,12 @@ Intervenante : Sarah KHALIL
 * Un subscriber surcharge un type d'évènement particulier du processus de JMS. Il y a donc 4 types d'évènement : pre/post serialize/deserialize.
 * À vérifier : un handler override aussi les éventuels subscribers présents.
 
+## Console & Command
+* Le composant Console permet de démarrer le kernel depuis un autre contexte qu'une requête HTTP.
+* Les points d'entrée de ce composant sont des Command
+* Lorsqu'on appelle 'bin/console <command>' depuis le répertoire racine d'un projet utilisant ce composant, le script Console.php est démarré. La commande demandé est alors exécutée (sa méthode execute() est appelée)
+* Il est préférable de déporter la logique d'un console dans un service. La Command ne fait alors qu'appeler ce service depuis execute().
+
 ## Autres
 ### HTTP
 Request line (method+uri+protocol) + headers + body
