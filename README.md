@@ -87,6 +87,9 @@ Intervenante : Sarah KHALIL
 * La configuration des assets se fait dans la clé framework de config.yml (ou config_dev.yml...) : base_url utile selon l'environnement, version pour avoir plusieurs version d'un jeu d'assets, etc.
 * La fonction absolute_url() résout aussi l'url réel et complet mais ne considère pas les autres paramètres d'assets.
 * 100 lignes max
+* Une erreur  est par défaut capturée par le profiler en mode dev. En prod (passer par app.php), une erreur  sera bien rendue dans un template, s'il y en a.
+* Par défaut, Twig fournit des templates overridables pour les exceptions (error.<template_format>.twig)
+* Pour overrider des templates core comme ceux des erreurs fournis par Twig, il faut recréer une arborescence à la racine du projet : templates/bundles/<OriginalBundle>/<bundle_tree>...
 
 ## Form
 * Ce composant permet de fournir un objet liant le modèle à la vue. Les données peuvent être typées différemment de chaque coté mais le composant gère ces changements.
@@ -104,7 +107,7 @@ Intervenante : Sarah KHALIL
 * Chaque form_row est elle même composée du label du Type, de son/ses widgets, et des messages d'erreurs de validation. (form_label(form.type), form_widget(form.type), form_errors(form.type))
 * Par défault, HTML5 impose un attribut required sur chaque champ de formulaire. Pour désactiver ce comportement, il faut explmicitement définir le type comme non required (lors de son insertion avec $builder->add(Type::class, ['required'=> false])). Il est aussi possible de passer une valeur d'attibut "novalidation" à la méthode form_start depuis la vue.
 * Pour faciliter le rendu complexe d'un formulaire (et pour que ce soit moins moche...), plutôt que de sur-décomposer ses widgets, labels, etc., on utilise un FormTheme.
-* Un FormTheme est un template qui définit des blocks spécifiques contenant du code HTML. Lorsque le nom de ce block est appelé depuis un autre template, c'est le rendu définit dans le template qui est généré.
+* Un FormTheme est un template qui définit des blocks spécifiques contenant du code HTML. Lorsque le nom de ce block est appelé depuis un autre template, c'est le rendu défini dans le template qui est généré.
 * Un FormTheme custom se range généralement dans app/resources/views/form. Il faut ensuite le définir en config comme étant le thème utilisé (cf CookBook & doc) : config.yml -> twig -> form_themes -> -MyBundle::myformtheme.html.twig .
 * Un FormTheme par défaut est fournit dans le bundle twig (cf config:dump-reference twig). Le bundle fournit aussi d'autres themes spécifiques à des thèmes de frameworks CSS connus (ex: bootstrap). Attention : le css n'est pas founi...
 * $form->handleRequest($request); lie le formulaire à la requête en cours. Lance la validation des Types.
@@ -115,6 +118,9 @@ Intervenante : Sarah KHALIL
 * Lorsqu'on définit un Type comme contenant un FileType (comme pour une photo), HTTPFundation gèrera la conversion du fichier en UploadedFile lors de la soumission du formulaire. UploadedFile dispose d'une méthode move()
 * Ça ne fonctionne pas en typage fort... Si on met l'attribut qui représente une image en string, il sera récupéré comme UploadedFile à la soumission du formulaire et paf ! Si on le type en UploadFile... (tester ?)
 * Il faut éviter de stocker les images sur le même environnemnt que le serveur web (cf S3, CDN, etc.). Des services sont spécialisés là-dedans.
+* En définissant une option "data_class" d'un type, on impose et on restreint le type de donnée manipulable par un type. (il faut overrider la methode configureOptions d'AbstractType)
+* configureOptions demande un OptionsResolver en paramètre pour pouvoir simplifier l'insertion/récupération des options attendues par le type.
+* La méthode setDefault() du resolver permet aussi d'ajouter de nouvelles options configurables au type.
 
 ## Doctrine (DBAL & ORM)
 * DBAL = DataBase Abstraction Layer. ORM = Object Relation Mapping
@@ -229,6 +235,7 @@ Intervenante : Sarah KHALIL
 * Groupes de sérialization : configurations de sérialization indépendantes. Il est possible de sérializer d'une manière ou d'une autre, selon le contexte. (même principe que les groupes de validation)
 * Documentation : NelmioApiDocBundle. Va générer une page de documentation routable. (vérifier installation des assets lors de l'installation de la dépendance)
 * Veiller à ce que la page de doc soit accessible (FW...)
+* Gestion des uploads fichiers via REST : dédié un endpoint à ça. L'upload se fait vers un CDN. L'entité contenant le media stocke alors le lien vers la resource CDN.
 
 ## Autres
 ### HTTP
