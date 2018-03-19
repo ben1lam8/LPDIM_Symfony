@@ -51,7 +51,5 @@ class ShowSubscriber implements EventSubscriberInterface
 
         $showAuthor = $this->tokenStorage->getToken()->getUser();
         $deserializedShow->setAuthor($showAuthor);
-
-        dump($deserializedShow); die;
     }
 }

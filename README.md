@@ -8,6 +8,8 @@ Intervenante : Sarah KHALIL
 * Lundi 12/02 (7h)
 * Lundi 19/02 (7h)
 * Mardi 20/02 (7h)
+* Lundi 19/03 (7h)
+* Mardi 17/03 (7h)
 
 ## Contenu
 1. [Présentation du Framework](#présentation-du-framework)
@@ -182,10 +184,21 @@ Intervenante : Sarah KHALIL
 * Il ne reste donc à 1: retrouver grâce au builder la définition du service cible (1) qui recevra les injections; 2: trouver dans cette définition la méthode à appeler pour injecter les dépendances; 3: trouver les services (2) ayant le tag souhaité; 4: injecter les (2) dans (1)
 
 ## Events
-* Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listener/subscriber.
+* Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listeners/subscribers.
 * Le dispatcher de Symfony est un service unique qui se charge de notifier des abonnés de l'occurence d'un/des évènement(s)
 * Ainsi, des évènements peuvent déclencher des logiques greffées (hooks) n'importe où dans le code.
 * Tout bundle peut utiliser le dispatcher de symfony pour emettre des évènements et permettre le hook dans son code.
+* Le kernel de Symfony lui-même émet des évènements (request, view, exception, terminate...) pour permettre des hooks dans son cycle de vie.
+* L'event kernel.controller est émis entre le routing et l'appel de l'action/callable. Il est donc possible de surcharger le routing ici et remplacer l'action/callable qui va être déclenchée.
+* L'evnet kernel.controller_arguments est émis lorsque les arguments de la requête à transmettre au controller sont montés. Il est donc possible de changer ces paramètres en se greffant à cet event.
+* L'event kernel.view est émis si un controller se termine sans rendre de Repsonse. En cablânt un listener sur cet évènement, on peut donc générer la Response ailleurs que dans le controller.
+* L'event kernel.response est émis lorsqu'un controller se termine normalement, avec une Response. Cette réponse est donc modifiable via ce hook.
+* L'event kernel.terminate est émis peu avant la fin du cycle de vie du script, après la restitution de la Response au client (via PHP puis le serveur web).
+* L'event kernel.finish_request est émis à la toute fin du cycle du kernel. Un hook dessus permet d'insérer un comportement de cloture à toute exécution du kernel.
+* Attention : l'insertion de hooks peut changer les données rendues, voire mais altérer tout le cycle de vie du script...
+* L'event kernel.exception est émis à chaque fois qu'une exception remonte la stack jusqu'au kernel (n'importe où dans le lifecycle).
+* Les listeners abonnés à un event sont listés par ordre de priorité dans le dispatcher. Il faut donc arrêter la propagation d'un event si on ne souhaite pas que d'autres listeners interviennent sur le même event.
+* bin/console debug:event-dispatcher : Affiche les listeners répertoriés par le dispatcher ainsi que leurs priorités
 
 ## Sécurité
 * Source : https://speakerdeck.com/saro0h/symfonycon-paris-dig-in-security
@@ -223,6 +236,16 @@ Intervenante : Sarah KHALIL
 * Une route pouvant être requêtée à la main, il faut aussi imposer la vérification d'autorisation d'accès à un controller, si nécessaire. Pour cela, on fait appel à la méthode denyAccessUnlessGranted('ROLE_ADMIN') offerte par le ControllerTrait;
 * ACL : Access C*** List. Liste des permissions stockées en base. Les tables contenant les règles de permissions sont créées pas Symfo. Abandonné par la Core Team du framework au profit des Voters, car difficile à maintenir coté dev.
 * Type particulier disponible pour un remplacement de password (old + new + confirm) : (???)
+* GUARD: Authenticator câblé à un/des providers 
+* supports() : doit retourner true/false pour
+* getCredentials() : doit extraire les username et password depuis la requête et les insérer dans un tableau retourné
+* getUser() : doit retourner un UserInterface qui correspond au username
+* checkCredentials() : encode et compare le password saisi au password persisté. Si ok, un token est créé et rendu. Sinon, exception levée.
+* onAuthenticationSuccess() : retourner null pour permettre au controller destinataire d'être appelé.
+* onAuthenticationFailure() : retourner une 401 pour notifier l'erreur d'authentification
+* start() : gère la redirection vers le formulaire login. Dans le cas d'un authenticator d'API, on renvoit une 401.
+* un Provider peut éventuellement faire appel à une tierce API pour récupérer un user : OAuth, LDAP, etc.
+* il est possible de chainer les authenticators : il faut les définir dans l'ordre voulu dans la config de Guard. Si un authenticator retourne null après getUser(), la main est passée à l'authenticator suivant.
 
 ## API
 * Rest : architecture d'interface d'application. Échelle d'évaluation : modèle de maturité de Richarson. Stateless !!!
@@ -236,6 +259,10 @@ Intervenante : Sarah KHALIL
 * Documentation : NelmioApiDocBundle. Va générer une page de documentation routable. (vérifier installation des assets lors de l'installation de la dépendance)
 * Veiller à ce que la page de doc soit accessible (FW...)
 * Gestion des uploads fichiers via REST : dédié un endpoint à ça. L'upload se fait vers un CDN. L'entité contenant le media stocke alors le lien vers la resource CDN.
+* Il respossible de personnaliser les comportements de sérialisation/désérialisation de JMS : soit avec un handler, soit avec un/des subscribers
+* Un handler remplace toute la logique par défaut de sérialisation/deserialization. Il fournit donc deux sens de transfomation d'une entité/json.
+* Un subscriber surcharge un type d'évènement particulier du processus de JMS. Il y a donc 4 types d'évènement : pre/post serialize/deserialize.
+* À vérifier : un handler override aussi les éventuels subscribers présents.
 
 ## Autres
 ### HTTP
