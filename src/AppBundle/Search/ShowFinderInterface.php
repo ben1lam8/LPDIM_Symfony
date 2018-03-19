@@ -3,7 +3,6 @@
 
 namespace AppBundle\Search;
 
-
 interface ShowFinderInterface
 {
     /**

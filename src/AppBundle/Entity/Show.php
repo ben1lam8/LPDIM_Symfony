@@ -6,21 +6,27 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * Class Show
  * @package AppBundle\Entity
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ShowRepository")
  * @ORM\Table(name="s_show")
+ * @JMS\ExclusionPolicy("all")
  */
 class Show
 {
+    const DATA_SOURCE_DB = "Local database";
+    const DATA_SOURCE_OMDB = "OMDB API";
 
     /**
      * @var int
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @JMS\Expose
+     * @JMS\Groups({"show_show"})
      */
     private $id;
 
@@ -28,6 +34,8 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a name for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update", "user_show", "category_show"})
      */
     private $name;
 
@@ -36,6 +44,8 @@ class Show
      * @ORM\ManyToOne(targetEntity="Category")
      * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      * @Assert\NotBlank(message="Please provide a category for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $category;
 
@@ -43,6 +53,8 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide an abstract for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $abstract;
 
@@ -50,13 +62,17 @@ class Show
      * @var string
      * @ORM\Column
      * @Assert\NotBlank(message="Please provide a country for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $country;
 
     /**
-     * @var string
-     * @ORM\Column
-     * @Assert\NotBlank(message="Please provide an author name for the show", groups={"create", "update"})
+     * @var User
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="shows")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $author;
 
@@ -64,6 +80,8 @@ class Show
      * @var \DateTime
      * @ORM\Column(type="date")
      * @Assert\NotBlank(message="Please provide a release date for the show", groups={"create", "update"})
+     * @JMS\Expose
+     * @JMS\Groups({"show_show", "show_update"})
      */
     private $releaseDate;
 
@@ -80,6 +98,12 @@ class Show
     private $tmpPictureFile;
 
     /**
+     * @var string
+     * @ORM\Column
+     */
+    private $dataSource;
+
+    /**
      * @return int
      */
     public function getId(): int
@@ -87,7 +111,11 @@ class Show
         return $this->id;
     }
 
-    // No Id setter
+    public function setId(int $id): Show
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return string
@@ -119,7 +147,7 @@ class Show
      * @param Category $category
      * @return Show
      */
-    public function setCategory(Category $category): Show
+    public function setCategory(?Category $category): Show
     {
         $this->category = $category;
         return $this;
@@ -162,19 +190,23 @@ class Show
     }
 
     /**
-     * @return string
+     * @return User|null
      */
-    public function getAuthor(): ?string
+    public function getAuthor(): ?User
     {
         return $this->author;
     }
 
     /**
-     * @param string $author
+     * @param User $author
      * @return Show
      */
-    public function setAuthor(string $author): Show
+    public function setAuthor(?User $author): Show
     {
+        if ($this->author != null) {
+            $this->author->removeShow($this);
+        }
+
         $this->author = $author;
         return $this;
     }
@@ -231,5 +263,32 @@ class Show
     {
         $this->tmpPictureFile = $tmpPictureFile;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDataSource(): string
+    {
+        return $this->dataSource;
+    }
+
+    /**
+     * @param string $dataSource
+     * @return Show
+     */
+    public function setDataSource(string $dataSource): Show
+    {
+        $this->dataSource = $dataSource;
+        return $this;
+    }
+
+    public function update(Show $otherShow)
+    {
+        foreach ($otherShow as $attribute => $newValue) {
+            if (!empty($newValue)) {
+                $this->$attribute = $newValue;
+            }
+        }
     }
 }

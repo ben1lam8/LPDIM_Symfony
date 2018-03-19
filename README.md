@@ -6,6 +6,10 @@ Intervenante : Sarah KHALIL
 * Lundi 05/02 (7h)
 * Mardi 06/02 (7h)
 * Lundi 12/02 (7h)
+* Lundi 19/02 (7h)
+* Mardi 20/02 (7h)
+* Lundi 19/03 (7h)
+* Mardi 17/03 (7h)
 
 ## Contenu
 1. [Présentation du Framework](#présentation-du-framework)
@@ -21,7 +25,8 @@ Intervenante : Sarah KHALIL
 11. [Dependency Injection](#dependency-injection)
 12. [Compiler Pass](#compiler-pass)
 13. [Events](#events)
-14. [Autres](#autres)
+14. [Sécurité](#sécurité)
+99. [Autres](#autres)
 
 ## Présentation du Framework 
 * Anecdote nom : Simple Framework = SF = SymFony. Simple = Sensio en ???
@@ -84,6 +89,9 @@ Intervenante : Sarah KHALIL
 * La configuration des assets se fait dans la clé framework de config.yml (ou config_dev.yml...) : base_url utile selon l'environnement, version pour avoir plusieurs version d'un jeu d'assets, etc.
 * La fonction absolute_url() résout aussi l'url réel et complet mais ne considère pas les autres paramètres d'assets.
 * 100 lignes max
+* Une erreur  est par défaut capturée par le profiler en mode dev. En prod (passer par app.php), une erreur  sera bien rendue dans un template, s'il y en a.
+* Par défaut, Twig fournit des templates overridables pour les exceptions (error.<template_format>.twig)
+* Pour overrider des templates core comme ceux des erreurs fournis par Twig, il faut recréer une arborescence à la racine du projet : templates/bundles/<OriginalBundle>/<bundle_tree>...
 
 ## Form
 * Ce composant permet de fournir un objet liant le modèle à la vue. Les données peuvent être typées différemment de chaque coté mais le composant gère ces changements.
@@ -91,6 +99,8 @@ Intervenante : Sarah KHALIL
 * Si la conversion de donnée entité-widget est trop complexe pour être 'deviné' par le framework, il faut fournir un DataTransformer entre le vue et le modèle.
 * Ex: transfomer un array (model) en checkboxes (vue), il faut un ModelTransformer (sous-classe de DataTransformer pour le sens model vers vue). Ce type de DataTransformer simple est sans doute déjà implémenté dans Symfony...
 * Ex: un DateTime en model correspond à plusieurs widget select box en vue.
+* Ex: un Array en model correspond à une chaine (cf sécurité -> rôles)
+* View Transformer vs. Model Transformer : ordre de conversion. Le composant formulaire appelle d'abord le callback transform() puis le callback reverseTransform(). Dans un Model Transformer, transform() gère la conversion Model -> View. C'est le contraire pour un View Transformer.
 * La représentation intermédiaire d'un formulaire, entre son model et sa vue, est appelée 'normalized'.
 * La génération d'une vue de formulaire suit un processus dont les étapes sont toujours dans le même ordre. Ces étapes donnent lieux à des évènements (FormEvents). En créant des listeners/subscribers abonnés à ces évenements, il est possible d'influencer le rendu de la vue.
 * Le bouton submit du formulaire est à détacher du Type. C'est le moteur qui doit le générer. Il convient donc d'éclater le rendu du formulaire dans le moteur : form_start(form), form_widget(form), form_rest(form), <input type="submit">, form_end(form)
@@ -99,7 +109,7 @@ Intervenante : Sarah KHALIL
 * Chaque form_row est elle même composée du label du Type, de son/ses widgets, et des messages d'erreurs de validation. (form_label(form.type), form_widget(form.type), form_errors(form.type))
 * Par défault, HTML5 impose un attribut required sur chaque champ de formulaire. Pour désactiver ce comportement, il faut explmicitement définir le type comme non required (lors de son insertion avec $builder->add(Type::class, ['required'=> false])). Il est aussi possible de passer une valeur d'attibut "novalidation" à la méthode form_start depuis la vue.
 * Pour faciliter le rendu complexe d'un formulaire (et pour que ce soit moins moche...), plutôt que de sur-décomposer ses widgets, labels, etc., on utilise un FormTheme.
-* Un FormTheme est un template qui définit des blocks spécifiques contenant du code HTML. Lorsque le nom de ce block est appelé depuis un autre template, c'est le rendu définit dans le template qui est généré.
+* Un FormTheme est un template qui définit des blocks spécifiques contenant du code HTML. Lorsque le nom de ce block est appelé depuis un autre template, c'est le rendu défini dans le template qui est généré.
 * Un FormTheme custom se range généralement dans app/resources/views/form. Il faut ensuite le définir en config comme étant le thème utilisé (cf CookBook & doc) : config.yml -> twig -> form_themes -> -MyBundle::myformtheme.html.twig .
 * Un FormTheme par défaut est fournit dans le bundle twig (cf config:dump-reference twig). Le bundle fournit aussi d'autres themes spécifiques à des thèmes de frameworks CSS connus (ex: bootstrap). Attention : le css n'est pas founi...
 * $form->handleRequest($request); lie le formulaire à la requête en cours. Lance la validation des Types.
@@ -110,6 +120,9 @@ Intervenante : Sarah KHALIL
 * Lorsqu'on définit un Type comme contenant un FileType (comme pour une photo), HTTPFundation gèrera la conversion du fichier en UploadedFile lors de la soumission du formulaire. UploadedFile dispose d'une méthode move()
 * Ça ne fonctionne pas en typage fort... Si on met l'attribut qui représente une image en string, il sera récupéré comme UploadedFile à la soumission du formulaire et paf ! Si on le type en UploadFile... (tester ?)
 * Il faut éviter de stocker les images sur le même environnemnt que le serveur web (cf S3, CDN, etc.). Des services sont spécialisés là-dedans.
+* En définissant une option "data_class" d'un type, on impose et on restreint le type de donnée manipulable par un type. (il faut overrider la methode configureOptions d'AbstractType)
+* configureOptions demande un OptionsResolver en paramètre pour pouvoir simplifier l'insertion/récupération des options attendues par le type.
+* La méthode setDefault() du resolver permet aussi d'ajouter de nouvelles options configurables au type.
 
 ## Doctrine (DBAL & ORM)
 * DBAL = DataBase Abstraction Layer. ORM = Object Relation Mapping
@@ -125,6 +138,7 @@ Intervenante : Sarah KHALIL
 * bin/console doctrine:migrations:migrate : Pour que doctrine joue toutes les migrations postérieures à la migration actuelle de la base (déterminée à l'aide de la table migrations_versions dans la base).
 * Pour corriger/customiser une migration, il suffit de manipuler les classes PHP générées par diff. up() définit le comportement lors d'une montée en version d'un pas, down() définit le comportement lors d'une régression d'un pas.
 * Il peut être utile de regrouper les migrations au sein d'une seule classe/version, si possible.
+* doctrine:migrations:generate permet de créer un template de classe de migration déjà versionnée. Il ne reste plus qu'à y insérer la logique de migration(up et down) puis à faire un execute.
 * Doctrine est tellement générique qu'il finit par être peu performant sur les grosses bases qui utilisent des moteurs atypiques. Préférer une abstraction plus bas niveau (style PDO) avec une administration de base en béton.
 * Relations One-to-One, One-to-Many, etc.
 * ParamConverter : Service (?) de Doctrine qui repère transforme le contenu de la Request en une Entity (grâce à l'id contenu dans la route). Un simple typehint de paramètre de contrôleur permet donc de récupérer une entité.
@@ -170,10 +184,91 @@ Intervenante : Sarah KHALIL
 * Il ne reste donc à 1: retrouver grâce au builder la définition du service cible (1) qui recevra les injections; 2: trouver dans cette définition la méthode à appeler pour injecter les dépendances; 3: trouver les services (2) ayant le tag souhaité; 4: injecter les (2) dans (1)
 
 ## Events
-* Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listener/subscriber.
+* Tout au long du cycle de vie d'une requête et de son traitement, divers évènements sont créés. Ces évènements sont centralisés auprès d'un dispatcher puis renvoyés vers leurs listeners/subscribers.
 * Le dispatcher de Symfony est un service unique qui se charge de notifier des abonnés de l'occurence d'un/des évènement(s)
 * Ainsi, des évènements peuvent déclencher des logiques greffées (hooks) n'importe où dans le code.
+* Tout bundle peut utiliser le dispatcher de symfony pour emettre des évènements et permettre le hook dans son code.
+* Le kernel de Symfony lui-même émet des évènements (request, view, exception, terminate...) pour permettre des hooks dans son cycle de vie.
+* L'event kernel.controller est émis entre le routing et l'appel de l'action/callable. Il est donc possible de surcharger le routing ici et remplacer l'action/callable qui va être déclenchée.
+* L'evnet kernel.controller_arguments est émis lorsque les arguments de la requête à transmettre au controller sont montés. Il est donc possible de changer ces paramètres en se greffant à cet event.
+* L'event kernel.view est émis si un controller se termine sans rendre de Repsonse. En cablânt un listener sur cet évènement, on peut donc générer la Response ailleurs que dans le controller.
+* L'event kernel.response est émis lorsqu'un controller se termine normalement, avec une Response. Cette réponse est donc modifiable via ce hook.
+* L'event kernel.terminate est émis peu avant la fin du cycle de vie du script, après la restitution de la Response au client (via PHP puis le serveur web).
+* L'event kernel.finish_request est émis à la toute fin du cycle du kernel. Un hook dessus permet d'insérer un comportement de cloture à toute exécution du kernel.
+* Attention : l'insertion de hooks peut changer les données rendues, voire mais altérer tout le cycle de vie du script...
+* L'event kernel.exception est émis à chaque fois qu'une exception remonte la stack jusqu'au kernel (n'importe où dans le lifecycle).
+* Les listeners abonnés à un event sont listés par ordre de priorité dans le dispatcher. Il faut donc arrêter la propagation d'un event si on ne souhaite pas que d'autres listeners interviennent sur le même event.
+* bin/console debug:event-dispatcher : Affiche les listeners répertoriés par le dispatcher ainsi que leurs priorités
 
+## Sécurité
+* Source : https://speakerdeck.com/saro0h/symfonycon-paris-dig-in-security
+* Ce composant est développé sur un modèle fortement axé programmation événementielle.
+* La mise en place d'une sécurité passe principalement par la configuration du SecurityBundle.
+* La configuration de la sécurité ne devant se faire qu'une fois (quelque soit l'organisation des config d'environnemnt), cette config DOIT se trouver dans un seul fichier yml : security.yml.
+* 4 notions clés : User, Provider, Encoder, Firewall. Et faire la distinction entre l'authentification (qui ?) et l'autorisation (a-t-il le droit ?). On parle aussi plutôt d'authentification plutôt que de connexion, car il existe un status authentifié mais anonyme.
+* USER : La classe représentant ce user DOIT implémenter UserInterface ou AdvancedUserInterface du composant Security (la deuxième est un peu plus complète mais la première suffit)
+* Cette implémentation d'interface impose au User de contenir des credentials et des rôles attribués.
+* Pour désactiver totallement l'identification d'utilisateurs, il faut le déclarer explicitement dans la config.
+* FIREWALL (EventListener) : "zone" logique (routes) dont l'accès nécessite une authentification du User. Si un utilisateur demande une route "derrière" le firewall, il peut lui être demandé de se logguer via un authenticator.
+* La stratégie d'authentification/l'authenticator peut varier : form_login, guard, etc. En cas de succès, L'authenticator retourne un token au FW. Ce token correspondant à l'utilisateur.
+* Le provider diffère selon la stratégie de sauvagarde des credentials.
+* Dans tous les cas, le FW redirige l'utilisateur vers une route lui permettant de s'authentifier (avec code 401).
+* PROVIDER (service): source locale ou distante fournissant les credentials au firewall pour vérifier l'authenfication. Il doit fournir au Firewall une instance de User.
+* chain provider : liste itérable de providers. Le firewall ira alors piocher tour à tour dans les sources de chaque provider fourni.
+* OAuth : à l'origine, oauth était destiné à l'autorisation plutôt qu'à l'authentification...
+* ENCODER (service) : gestionnaire d'encodage des mots de passe et données. Hashe et compare.
+* Une instance d'encoder par type d'utilisateur.
+* Si l'encoder retourne un false (càd que ce qui est saisi, une fois hashé, ne correspond pas à ce qui est stocké), une redirection 401
+* bin/console security:encode-password <clear-password> : utilise l'encoder configuré pour encoder un password.
+* Bonne pratique : Une API devant être stateless, il faudra fournir une authentification à chaque appel d'endpoint. Il faut alors placer les routes de l'api derrière un FW.
+* Autorisation / Acces Control : vérification du rôle de l'utilisateur identifié. Un service Symfony authorization_checker("access_decision_manager") est déjà disponible pour vérifier
+* Une twig extension utilise ce même service pour proposer l'extension isGranted();
+* Le comportement du checker est configurable. Il y a différentes stratégies possibles (affirmative, consensus, unanimous).
+* On n'appelle jamais directement un Voter, car checker->isGranted() fait le tour de tous les Voters pour décider de l'autorisation. Le contourner rend donc la décision de l'unique Voter non-fiable.
+* Les controllers ont accès à une méthode getUser() qui permet de récupérer l'instance du User authentifié. Si le controller n'est pas dans une zone gérée par un FW, cette méthode ne rendra rien.
+* La méthode getUser est un raccourci fourni par le ControllerTrait. En réalité, le User est récupéré grâce à la méthode getUser() du service security.token_storage.
+* Lors de l'authentification d'un User, un token est généré par l'authenticator (comme form_login) 
+* Les roles peuvent être organisées en hierarchie pour que le user n'enregistre que l'étiquette correspondant à son unique rôle hierarchisé. Ils peuvent aussi ête stockées avec des valeurs multiples pour le User, grâce à une sérialisation (cf. Doctrine type json-array, par exemple)
+* VOTER : service (taggué security.voter) qui implemente la classe abstraite Voter. 2 méthodes imposées par Voter (et son interface) : supports() et voteOnAttribute();
+* voteOnAttribute() : contient la logique de décision d'autorisation d'accès de l'utilisateur à un sujet (subject) selon les attributs passés. Retourne true si accès autorisé, false sinon.
+* supports() : vérifie que le subject et les attributs concernent bien le Voter.
+* L'implémentation d'un Voter permet d'accéder à l'autorisation avec isGranted()/is_granted() seulement, au lieu de faire de la logique complexe de vérification dans un controller ou un template.
+* Une route pouvant être requêtée à la main, il faut aussi imposer la vérification d'autorisation d'accès à un controller, si nécessaire. Pour cela, on fait appel à la méthode denyAccessUnlessGranted('ROLE_ADMIN') offerte par le ControllerTrait;
+* ACL : Access C*** List. Liste des permissions stockées en base. Les tables contenant les règles de permissions sont créées pas Symfo. Abandonné par la Core Team du framework au profit des Voters, car difficile à maintenir coté dev.
+* Type particulier disponible pour un remplacement de password (old + new + confirm) : (???)
+* GUARD: Authenticator câblé à un/des providers 
+* supports() : doit retourner true/false pour
+* getCredentials() : doit extraire les username et password depuis la requête et les insérer dans un tableau retourné
+* getUser() : doit retourner un UserInterface qui correspond au username
+* checkCredentials() : encode et compare le password saisi au password persisté. Si ok, un token est créé et rendu. Sinon, exception levée.
+* onAuthenticationSuccess() : retourner null pour permettre au controller destinataire d'être appelé.
+* onAuthenticationFailure() : retourner une 401 pour notifier l'erreur d'authentification
+* start() : gère la redirection vers le formulaire login. Dans le cas d'un authenticator d'API, on renvoit une 401.
+* un Provider peut éventuellement faire appel à une tierce API pour récupérer un user : OAuth, LDAP, etc.
+* il est possible de chainer les authenticators : il faut les définir dans l'ordre voulu dans la config de Guard. Si un authenticator retourne null après getUser(), la main est passée à l'authenticator suivant.
+
+## API
+* Rest : architecture d'interface d'application. Échelle d'évaluation : modèle de maturité de Richarson. Stateless !!!
+* Hypermedia : endpoints des resources liées.
+* Bundles : FOSRestBundle et ApiPlatform. Bazinga???Bundle
+* Endpoint : équivalent d'un controller (logique de route) mais la Response ne contient pas de template.
+* Serialization : composant Serializer de Symfony ou JMSSerializeBundle.
+* Le service 'serializer' est un service dont le type d'instance dépend du serializer configuré.
+* Exclusion/Exposition : le bundle de JMS permet de configurer quels attributs masquer ou exposer dans la réponse sérialisée. Préférer tout exclure d'abord et exposer au compte goutte.
+* Groupes de sérialization : configurations de sérialization indépendantes. Il est possible de sérializer d'une manière ou d'une autre, selon le contexte. (même principe que les groupes de validation)
+* Documentation : NelmioApiDocBundle. Va générer une page de documentation routable. (vérifier installation des assets lors de l'installation de la dépendance)
+* Veiller à ce que la page de doc soit accessible (FW...)
+* Gestion des uploads fichiers via REST : dédié un endpoint à ça. L'upload se fait vers un CDN. L'entité contenant le media stocke alors le lien vers la resource CDN.
+* Il respossible de personnaliser les comportements de sérialisation/désérialisation de JMS : soit avec un handler, soit avec un/des subscribers
+* Un handler remplace toute la logique par défaut de sérialisation/deserialization. Il fournit donc deux sens de transfomation d'une entité/json.
+* Un subscriber surcharge un type d'évènement particulier du processus de JMS. Il y a donc 4 types d'évènement : pre/post serialize/deserialize.
+* À vérifier : un handler override aussi les éventuels subscribers présents.
+
+## Console & Command
+* Le composant Console permet de démarrer le kernel depuis un autre contexte qu'une requête HTTP.
+* Les points d'entrée de ce composant sont des Command
+* Lorsqu'on appelle 'bin/console <command>' depuis le répertoire racine d'un projet utilisant ce composant, le script Console.php est démarré. La commande demandé est alors exécutée (sa méthode execute() est appelée)
+* Il est préférable de déporter la logique d'un console dans un service. La Command ne fait alors qu'appeler ce service depuis execute().
 
 ## Autres
 ### HTTP
@@ -189,6 +284,15 @@ Méthodes (verbs) HTTP à connaître pour une bonne API (modèle de Richardson) 
 * HEAD          get-response-headers-only
 * OPTIONS       get-available-actions
 * TRACE         get-vias ?
+
+Modèle de maturité de Richardson:
+0 : 1 resource/endpoint, tout en POST ("Swamp of POX")
+1 : n resources/endpoints, tout en POST
+2 : n resources/endpoints, methodes HTTP
+3 : n resources/endpoints, methodes HTTP, hypermedia controls
+
+* 401 : code unauthorized
+* 403 : code authorized
 
 Headers custom: X-...
 Voir easter-eggs dans les headers (exemple de sensiolabs.com)

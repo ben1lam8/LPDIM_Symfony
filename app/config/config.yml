@@ -19,7 +19,7 @@ framework:
     form: ~
     csrf_protection: ~
     validation: { enable_annotations: true }
-    #serializer: { enable_annotations: true }
+    serializer: { enable_annotations: true }
     default_locale: '%locale%'
     trusted_hosts: ~
     session:
@@ -77,3 +77,14 @@ csa_guzzle:
         OMDB_API_Client:
             config:
                 base_uri: 'http://www.omdbapi.com'
+
+# API Documentation
+nelmio_api_doc:
+  areas:
+      path_patterns: # an array of regexps
+          - ^/api(?!/doc$)
+  documentation:
+          info:
+              title: Shows [Ben]
+              description: Not another open wiki sandbox about shows...
+              version: 0.9.0

@@ -4,14 +4,56 @@ security:
 
     # https://symfony.com/doc/current/security.html#b-configuring-how-users-are-loaded
     providers:
+        chain_provider:
+            chain:
+                providers: [in_memory, user_db]
         in_memory:
-            memory: ~
+            memory:
+                users:
+                    admin@memory.local:
+                        password: '$2y$13$uzEfl/QkTmHBIMjY2gw./ec8zPAzYymGnzCNUZYk0Nmnqsk75QDm6' #admin
+                        roles:    'ROLE_ADMIN'
+        user_db:
+            entity:
+                class: AppBundle\Entity\User
+                property: email
+
+    encoders:
+        Symfony\Component\Security\Core\User\User: bcrypt   #memory users encoder
+        AppBundle\Entity\User: bcrypt   #or argon2i for php7.2+
 
     firewalls:
         # disables authentication for assets and the profiler, adapt it according to your needs
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
+        anonymous_area:
+            pattern: ^/login$
+            anonymous: ~
+
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: user_db
+            guard:
+                authenticators:
+                    - AppBundle\Security\Authentication\ApiUserPasswordAuthenticator
+
+        api_doc:
+            pattern: ^/api/doc
+            anonymous: ~
+
+        secured_area:
+            pattern: ^/
+            provider: chain_provider
+            form_login:
+                login_path: /login
+                check_path: /login_check
+                username_parameter: email         #overrides _username key
+                password_parameter: password      #overrides _password key
+                always_use_default_target_path: true
+            logout: ~
 
         main:
             anonymous: ~
@@ -22,3 +64,7 @@ security:
 
             # https://symfony.com/doc/current/security/form_login_setup.html
             #form_login: ~
+
+    access_control:
+        - path: ^/user
+          roles: ['ROLE_ADMIN']
